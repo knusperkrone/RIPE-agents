@@ -4,11 +4,17 @@
 #include <PubSubClient.h>
 
 #include "constants.h"
+#include "mqtt.h"
 #include "settings.h"
 #include "utils.h"
+#include "wifi.h"
 
-void mqtt_setup(MQTT_CALLBACK_SIGNATURE);
-void mqtt_loop();
-void mqtt_send(char *topic, char *payload);
+class Mqtt {
+   public:
+    static void setup(MQTT_CALLBACK_SIGNATURE);
+    static void loop();
+    static void send(char *topic, char *payload);
 
-extern WiFiClient wifiClient;
+   private:
+    static void reconnect();
+};

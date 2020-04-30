@@ -2,7 +2,7 @@
 
 WiFiClient wifiClient;
 
-void wifi_setup() {
+void Wifi::connect() {
     if (WiFi.status() == WL_CONNECTED) {
         return;
     }
@@ -18,4 +18,11 @@ void wifi_setup() {
 
     Serial.print("[INFO] WiFi connected: ");
     Serial.println(WiFi.localIP());
+}
+
+void Wifi::reconnect() {
+    if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("[WARN] Wifi was lost");
+        Wifi::connect();
+    }
 }

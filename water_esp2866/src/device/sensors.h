@@ -4,5 +4,8 @@
 
 #include "constants.h"
 
-void set_water(bool on);
-int read_moisture();
+class Sensor {
+   public:
+    static void set_water(bool on);
+    static int read_moisture();
+};

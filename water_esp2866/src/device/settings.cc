@@ -1,33 +1,42 @@
 #include "settings.h"
 
-void settings_setup() {
+void Settings::setup() {
     EEPROM.begin(512);
 }
 
-int get_sensor_id() {
+int Settings::get_sensor_id() {
     SensorIdCanary canary;
-    EEPROM.get(ID_OFFSET, canary);
+    Settings::read(ID_OFFSET, canary);
     if (canary.canary == CANARY) {
         return canary.id;
     }
     return -1;
 }
 
-void set_sensor_id(int id) {
+void Settings::set_sensor_id(int id) {
     SensorIdCanary canary = {
         canary : CANARY,
         id : id,
     };
-    EEPROM.put(ID_OFFSET, canary);
+    Settings::write(ID_OFFSET, canary);
+}
+
+const char *Settings::get_sensor_id_str() {
+    if (*this->id_str_buffer == 0) {
+        iota(this->get_sensor_id(), id_str_buffer, sizeof(this->id_str_buffer));
+    }
+    return id_str_buffer;
+}
+
+template <typename T>
+void Settings::read(int offset, T &val) {
+    EEPROM.get(offset, val);
+}
+
+template <typename T>
+void Settings::write(int offset, T &val) {
+    EEPROM.put(offset, val);
     if (!EEPROM.commit()) {
         Serial.println("[ERROR] Invalid EEPROM write!");
     }
-}
-
-char *get_sensor_id_str() {
-    static char buffer[12];
-    if (*buffer == 0) {
-        iota(get_sensor_id(), buffer, sizeof(buffer));
-    }
-    return buffer;
 }

@@ -8,7 +8,7 @@
 #define MQTT_NAME_PREFIX "WaterSensor_"
 
 // BACKEND SETTINGS
-#define BACKEND_URL "http://192.168.178.47:8000"
+#define BACKEND_URL "http://192.168.1.57:8000"
 // BACKEND CONSTATNS
 #define BACKEND_SENSOR_PATH "/api/sensor"
 #define MQTT_DATA_PATH "sensor/data/"

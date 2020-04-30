@@ -4,11 +4,16 @@
 #include <ESP8266HTTPClient.h>
 
 #include "device/mqtt.h"
-#include "device/settings.h"
 #include "device/sensors.h"
+#include "device/settings.h"
+#include "device/wifi.h"
 #include "dto.h"
 
-int backend_register();
-void send_moisture();
+class BackendAdapter {
+   public:
+    static int setup();
+    static void send_data();
 
-extern WiFiClient wifiClient;
+   private:
+    static int fetch_sensor_id();
+};

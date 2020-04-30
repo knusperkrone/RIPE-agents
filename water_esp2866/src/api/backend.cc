@@ -1,6 +1,49 @@
 #include "backend.h"
 
-int fetch_sensor_id() {
+int BackendAdapter::setup() {
+    Serial.println("[INFO] Registering to backend");
+    int sensor_id = settings.get_sensor_id();
+    if (sensor_id < 0) {
+        sensor_id = BackendAdapter::fetch_sensor_id();
+        if (sensor_id < 0) {
+            delay(100);
+            Wifi::reconnect();
+            return BackendAdapter::setup();  // Recurse or die!
+        } else {
+            settings.set_sensor_id(sensor_id);
+        }
+        Serial.print("[DEBUG] Fetched id ");
+    } else {
+        Serial.print("[INFO] Using cached id ");
+    }
+    Serial.println(sensor_id);
+
+    return sensor_id;
+}
+
+void BackendAdapter::send_data() {
+    static unsigned long last_send;
+
+    if (millis() - last_send > SEND_TIMEOUT_MS) {
+        last_send = millis();
+        int moisture = Sensor::read_moisture();
+
+        const char *sensor_id = settings.get_sensor_id_str();
+        char cmdTopic[strlen(MQTT_DATA_PATH) + strlen(sensor_id) + 1];
+        concat(cmdTopic, MQTT_DATA_PATH, sensor_id);
+
+        char buffer[256];
+        StaticJsonDocument<256> doc;
+        doc["moisture"] = moisture;
+        serializeJson(doc, buffer);
+
+        Serial.print("[INFO] Sending moisture: ");
+        Serial.println(moisture);
+        Mqtt::send(cmdTopic, buffer);
+    }
+}
+
+int BackendAdapter::fetch_sensor_id() {
     Serial.println("[INFO] Fetching sensor_id from backend");
 
     HTTPClient httpClient;
@@ -30,45 +73,4 @@ int fetch_sensor_id() {
     httpClient.end();
 
     return fetched_id;
-}
-
-int backend_register() {
-    Serial.println("[INFO] Registering to backend");
-    int sensor_id = get_sensor_id();
-    if (sensor_id < 0) {
-        sensor_id = fetch_sensor_id();
-        if (sensor_id < 0) {
-            delay(100);
-            return backend_register();  // Recurse or die!
-        } else {
-            set_sensor_id(sensor_id);
-        }
-        Serial.print("[DEBUG] Fetched id ");
-    } else {
-        Serial.print("[INFO] Using cached id ");
-    }
-    Serial.println(sensor_id);
-
-    return sensor_id;
-}
-
-void send_moisture() {
-    static unsigned long last_send;
-
-    if (millis() - last_send > SEND_TIMEOUT_MS) {
-        last_send = millis();
-        int moisture = read_moisture();
-
-        char cmdTopic[strlen(MQTT_DATA_PATH) + strlen(get_sensor_id_str()) + 1];
-        concat(cmdTopic, MQTT_DATA_PATH, get_sensor_id_str());
-
-        char buffer[256];
-        StaticJsonDocument<256> doc;
-        doc["moisture"] = moisture;
-        serializeJson(doc, buffer);
-
-        Serial.print("[INFO] Sending moisture: ");
-        Serial.println(moisture);
-        mqtt_send(cmdTopic, buffer);
-    }
 }

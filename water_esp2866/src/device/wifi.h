@@ -4,6 +4,10 @@
 
 #include "constants.h"
 
-void wifi_setup();
+class Wifi {
+   public:
+    static void connect();
+    static void reconnect();
+};
 
 extern WiFiClient wifiClient;

@@ -1,6 +1,6 @@
 #include "sensors.h"
 
-void set_water(bool on) {
+void Sensor::set_water(bool on) {
     if (on) {
         Serial.println("[INFO] Water on");
         digitalWrite(WATER_RELAY, HIGH);
@@ -10,7 +10,7 @@ void set_water(bool on) {
     }
 }
 
-int read_moisture() {
+int Sensor::read_moisture() {
     int moisture = analogRead(MOISTURE_SENSOR);
 
     // Absolute measured values
