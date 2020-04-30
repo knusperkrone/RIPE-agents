@@ -19,9 +19,8 @@ void mqtt_callback(char *topic, byte *payload, unsigned int length) {
         Serial.println("[ERROR] Failed to deserialize backend response");
     } else {
         const char *domain = cmdMsgBuffer["domain"];
-        if (strcmp(domain, SENSOR_DOMAIN) == 0) {
-            bool on = cmdMsgBuffer["payload"];
-            set_water(on);
+        if (strcmp(domain, SENSOR_WATER_DOMAIN) == 0) {
+            set_water(cmdMsgBuffer["payload"]);
         }
     }
 }
@@ -39,8 +38,9 @@ void setup() {
 }
 
 void loop() {
-    mqtt_loop();
-    send_moisture();
+    wifi_setup();     // Refresh wifi_connection - if necessary
+    mqtt_loop();      // Check for new mqtt messages
+    send_moisture();  // Send sensor data - if necessary
 
-    delay(250);
+    delay(1000);  // Save Battery
 }

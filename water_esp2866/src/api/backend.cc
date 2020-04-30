@@ -57,16 +57,18 @@ void send_moisture() {
 
     if (millis() - last_send > SEND_TIMEOUT_MS) {
         last_send = millis();
-        Serial.println("[INFO] Sending moisture");
+        int moisture = read_moisture();
 
         char cmdTopic[strlen(MQTT_DATA_PATH) + strlen(get_sensor_id_str()) + 1];
         concat(cmdTopic, MQTT_DATA_PATH, get_sensor_id_str());
 
         char buffer[256];
         StaticJsonDocument<256> doc;
-        doc["moisture"] = read_moisture();
+        doc["moisture"] = moisture;
         serializeJson(doc, buffer);
 
+        Serial.print("[INFO] Sending moisture: ");
+        Serial.println(moisture);
         mqtt_send(cmdTopic, buffer);
     }
 }

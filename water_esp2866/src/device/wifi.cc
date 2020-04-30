@@ -3,7 +3,9 @@
 WiFiClient wifiClient;
 
 void wifi_setup() {
-    delay(10);
+    if (WiFi.status() == WL_CONNECTED) {
+        return;
+    }
     Serial.println("[INFO ]Connecting to ");
     Serial.println(SSID_NAME);
 

@@ -23,6 +23,11 @@ int read_moisture() {
     moisture *= 100;
     moisture /= max;
     moisture = 100 - moisture;
+    if (moisture > 100) {
+        moisture = 100;
+    } else if (moisture < 0) {
+        moisture = 0;
+    }
 
     return moisture;
 }
