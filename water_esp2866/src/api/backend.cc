@@ -4,13 +4,19 @@ std::tuple<int, char *> BackendAdapter::setup() {
     Serial.println("[INFO] Registering to backend");
     int sensor_id = settings.get_sensor_id();
     char *sensor_key = settings.get_sensor_key();
+
+    // Check if id is valid
     if (sensor_id < 0) {
         std::tie(sensor_id, sensor_key) = BackendAdapter::register_sensor();
         if (sensor_id < 0) {
             delay(250);
             Wifi::reconnect();
-            return BackendAdapter::setup();  // Recurse or die!
+            return BackendAdapter::setup();  // Recurse or die
         } else {
+            // Register agents
+            while (!BackendAdapter::register_agent(sensor_id, sensor_key, SENSOR_WATER_DOMAIN, SENSOR_WATER_AGENT)) {
+                delay(250);
+            }
             settings.set_sensor_data(sensor_id, sensor_key);
         }
         Serial.print("[DEBUG] fetched key ");
@@ -49,14 +55,26 @@ void BackendAdapter::send_data() {
 
 std::tuple<int, char *> BackendAdapter::register_sensor() {
     Serial.println("[INFO] Fetching sensor_id from backend");
+    int fetched_id = -1;
+    char *fetched_key = NULL;
 
+    // Serialize payload
+    char body_buffer[512];
+    StaticJsonDocument<512> doc;
+    doc[SENSOR_REGISTER_DTO_NAME] = SENSOR_NAME;
+    size_t written = serializeJson(doc, body_buffer);
+    if (written == 0 || written >= sizeof(body_buffer)) {
+        Serial.print("[ERROR] Failed serializing agent body, written bytes: ");
+        Serial.println(written);
+        return std::make_tuple(fetched_id, fetched_key);
+    }
+
+    // Dispatch request
     HTTPClient httpClient;
     httpClient.begin(wifiClient, BACKEND_URL BACKEND_SENSOR_PATH);
     httpClient.addHeader("Content-Type", "application/json");
 
-    int fetched_id = -1;
-    char *fetched_key = NULL;
-    int code = httpClient.POST(REGISTER_PAYLOAD);
+    int code = httpClient.POST(body_buffer);
     if (code > 0) {
         if (code == 200) {
             String msg = httpClient.getString();
@@ -79,4 +97,54 @@ std::tuple<int, char *> BackendAdapter::register_sensor() {
     httpClient.end();
 
     return std::make_tuple(fetched_id, fetched_key);
+}
+
+bool BackendAdapter::register_agent(int id, char *key, const char *domain, const char *agent) {
+    Serial.println("[INFO] Registering agent from backend");
+
+    // Convert id to string
+    char id_buffer[12];
+    iota(id, id_buffer, sizeof(id_buffer) - 1);
+
+    // Concat url
+    char url_buffer[sizeof(BACKEND_URL) + sizeof(BACKEND_AGENT_PATH) + 1 + strlen(id_buffer) + 1 + strlen(key)];
+    concat(url_buffer, 4, BACKEND_URL BACKEND_AGENT_PATH "/", id_buffer, "/", key);
+
+    // Serialize payload
+    char body_buffer[512];
+    StaticJsonDocument<512> doc;
+    doc[AGENT_REGISTER_DTO_DOMAIN] = domain;
+    doc[AGENT_REGISTER_DTO_AGENT_NAME] = agent;
+    size_t written = serializeJson(doc, body_buffer);
+    if (written == 0 || written >= sizeof(body_buffer)) {
+        Serial.print("[ERROR] Failed serializing agent body, written bytes: ");
+        Serial.println(written);
+        return false;
+    }
+
+    // Dispatch request
+    HTTPClient httpClient;
+    httpClient.begin(wifiClient, url_buffer);
+    httpClient.addHeader("Content-Type", "application/json");
+
+    bool ret = false;
+    int code = httpClient.POST(body_buffer);
+    if (code > 0) {
+        if (code == 200) {
+            ret = true;
+            Serial.print("[INFO] Registered agent ");
+            Serial.print(agent);
+            Serial.print(" on domain ");
+            Serial.println(domain);
+        } else {
+            Serial.print("[ERROR] Invalid backend response: ");
+            Serial.println(code);
+        }
+    } else {
+        Serial.print("[ERROR] Http error: ");
+        Serial.println(httpClient.errorToString(code));
+    }
+    httpClient.end();
+
+    return ret;
 }
