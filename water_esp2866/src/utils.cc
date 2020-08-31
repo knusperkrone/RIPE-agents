@@ -1,7 +1,5 @@
 #include "utils.h"
 
-#include <Arduino.h>
-
 char *iota(int val, char *buffer, unsigned int length) {
     unsigned int i = 0;
     while (val != 0 && i < length - 1) {
@@ -20,12 +18,19 @@ char *iota(int val, char *buffer, unsigned int length) {
     return buffer;
 }
 
-char *concat(char *buffer, const char *prefix, const char *suffix) {
+char *concat(char *buffer, int count, ...) {
+    va_list arguments;
     char *bufferBase = buffer;
-    memccpy(bufferBase, prefix, '\0', strlen(prefix));
-    bufferBase += strlen(prefix);
-    memccpy(bufferBase, suffix, '\0', strlen(suffix));
-    bufferBase += strlen(suffix);
+
+    va_start(arguments, count);
+    for (int i = 0; i < count; i++) {
+        const char *toAppend = va_arg(arguments, char *);
+        size_t len = strlen(toAppend);
+        memcpy(bufferBase, toAppend, len);
+        bufferBase += len;
+    }
+    va_end(arguments);
+    
     *bufferBase = '\0';
     return buffer;
 }

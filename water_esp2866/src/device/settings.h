@@ -6,28 +6,23 @@
 #include "constants.h"
 #include "utils.h"
 
-#define CANARY 0xc0ffe + 1
-#define ID_OFFSET 0
+#define CANARY 0xc0ffeeUL + 2
 
-struct SensorIdCanary {
-    unsigned int canary;
-    int id;
-};
+#define CANARY_OFFSET 0
+#define ID_OFFSET CANARY_OFFSET + sizeof(unsigned long)
+#define KEY_OFFSET ID_OFFSET + sizeof(unsigned long)
 
 class Settings {
    public:
     void setup();
+    void set_sensor_data(int id, char *key);
     int get_sensor_id();
-    void set_sensor_id(int id);
-    const char *get_sensor_id_str();
+    char *get_sensor_key();
+    const char *get_sensor_id_str();    
 
    private:
     char id_str_buffer[8];
-
-    template <typename T>
-    static void read(int offset, T &val);
-    template <typename T>
-    static void write(int offset, T &val);
+    char key_str_buffer[9];
 };
 
 extern Settings settings;

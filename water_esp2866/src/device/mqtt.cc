@@ -15,6 +15,7 @@ void Mqtt::loop() {
 }
 
 void Mqtt::send(char *topic, char *payload) {
+    mqttClient.loop();
     if (!mqttClient.connected()) {
         Mqtt::reconnect();
     }
@@ -25,20 +26,17 @@ void Mqtt::reconnect() {
     if (!mqttClient.connected()) {
         // Concat sensor name
         const char *sensor_id = settings.get_sensor_id_str();
+        const char *sensor_key = settings.get_sensor_key();
         int prefix_len = strlen(MQTT_NAME_PREFIX);
         int id_len = strlen(sensor_id);
 
-        char name[prefix_len + id_len + 1];
-        char *nameBase = name;
-        memccpy(nameBase, MQTT_NAME_PREFIX, '\0', prefix_len);
-        nameBase += prefix_len;
-        memccpy(nameBase, sensor_id, '\0', id_len);
-        nameBase += id_len;
-        *nameBase = '\0';
+        char sensor_name[prefix_len + id_len + 1];
+        concat(sensor_name, 2, MQTT_NAME_PREFIX, sensor_id);
 
         while (!mqttClient.connected()) {
-            Serial.println("[INFO] Reconnecting MQTT...");
-            if (!mqttClient.connect(name)) {
+            Serial.print("[INFO] Reconnecting MQTT as ");
+            Serial.println(sensor_name);
+            if (!mqttClient.connect(sensor_name)) {
                 Serial.print("[ERROR] failed, rc=");
                 Serial.print(mqttClient.state());
                 Serial.println(" retrying in 3 seconds");
@@ -48,8 +46,9 @@ void Mqtt::reconnect() {
 
         // Concat CMD topic
         char cmdTopic[strlen(MQTT_CMD_PATH) + strlen(sensor_id) + 1];
-        concat(cmdTopic, MQTT_CMD_PATH, sensor_id);
+        concat(cmdTopic, 4, MQTT_CMD_PATH, sensor_id, "/", sensor_key);
 
         mqttClient.subscribe(cmdTopic);
+        Serial.print("[INFO] Connected MQTT");
     }
 }

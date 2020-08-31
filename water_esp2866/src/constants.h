@@ -20,5 +20,5 @@
 #define SENSOR_NAME "REFERENCE_SENSOR"
 #define SENSOR_WATER_DOMAIN "water"
 #define SENSOR_WATER_AGENT "ThresholdAgent"
-#define WATER_RELAY D8
+#define WATER_RELAY D8   
 #define MOISTURE_SENSOR A0

@@ -9,11 +9,13 @@
 #include "device/wifi.h"
 #include "dto.h"
 
+#define KEY_LENGTH 8
+
 class BackendAdapter {
    public:
-    static int setup();
+    static std::tuple<int, char*> setup();
     static void send_data();
 
    private:
-    static int fetch_sensor_id();
+    static std::tuple<int, char*> register_sensor();
 };
