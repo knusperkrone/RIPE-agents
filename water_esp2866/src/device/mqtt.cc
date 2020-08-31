@@ -49,6 +49,6 @@ void Mqtt::reconnect() {
         concat(cmdTopic, 4, MQTT_CMD_PATH, sensor_id, "/", sensor_key);
 
         mqttClient.subscribe(cmdTopic);
-        Serial.print("[INFO] Connected MQTT");
+        Serial.println("[INFO] Connected MQTT");
     }
 }
