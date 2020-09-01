@@ -3,11 +3,14 @@
 #include <ESP8266WiFi.h>
 
 #include "constants.h"
+#include "settings.h"
 
 class Wifi {
    public:
-    static void connect();
+    static bool connect();
     static void reconnect();
+    static bool hasConnection();
 };
 
 extern WiFiClient wifiClient;
+extern Settings settings;

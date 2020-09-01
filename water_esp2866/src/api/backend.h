@@ -13,10 +13,10 @@
 
 class BackendAdapter {
    public:
-    static std::tuple<int, char *> setup();
+    static bool setup(int tries = 3);
     static void send_data();
 
    private:
-    static std::tuple<int, char *> register_sensor();
-    static bool register_agent(int id, char *key, const char *domain, const char *agent);
+    static std::tuple<int, const char *> register_sensor();
+    static bool register_agent(int id, const char *key, const char *domain, const char *agent);
 };

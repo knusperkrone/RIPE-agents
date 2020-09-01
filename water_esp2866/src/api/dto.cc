@@ -1,4 +1,4 @@
 #include "dto.h"
 
-StaticJsonDocument<48> registerRespBuffer;
-StaticJsonDocument<75> cmdMsgBuffer;
+StaticJsonDocument<256> registerRespBuffer;
+StaticJsonDocument<256> cmdMsgBuffer;

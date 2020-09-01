@@ -1,33 +1,38 @@
 #include "backend.h"
 
-std::tuple<int, char *> BackendAdapter::setup() {
-    Serial.println("[INFO] Registering to backend");
+bool BackendAdapter::setup(int tries) {
     int sensor_id = settings.get_sensor_id();
-    char *sensor_key = settings.get_sensor_key();
+    const char *sensor_key = settings.get_sensor_key();
 
     // Check if id is valid
     if (sensor_id < 0) {
         std::tie(sensor_id, sensor_key) = BackendAdapter::register_sensor();
         if (sensor_id < 0) {
+            if (tries-- == 0) {
+                return false;
+            }
             delay(250);
             Wifi::reconnect();
-            return BackendAdapter::setup();  // Recurse or die
+            return BackendAdapter::setup(tries);  // Recurse or die
         } else {
             // Register agents
             while (!BackendAdapter::register_agent(sensor_id, sensor_key, SENSOR_WATER_DOMAIN, SENSOR_WATER_AGENT)) {
+                if (tries-- == 0) {
+                    return false;
+                }
                 delay(250);
             }
-            settings.set_sensor_data(sensor_id, sensor_key);
+            settings.set_sensor_config(sensor_id, sensor_key);
         }
-        Serial.print("[DEBUG] fetched key ");
-        Serial.println(sensor_key);
-        Serial.print("[DEBUG] Fetched id ");
     } else {
-        Serial.print("[INFO] Using cached id ");
+        Serial.println("[INFO] Using local settings");
     }
-    Serial.println(sensor_id);
 
-    return std::tuple<int, char *>{0, sensor_key};
+    Serial.print("[INFO] Sensor id: ");
+    Serial.println(sensor_id);
+    Serial.print("[INFO] Sensor key: ");
+    Serial.println(sensor_key);
+    return true;
 }
 
 void BackendAdapter::send_data() {
@@ -53,7 +58,7 @@ void BackendAdapter::send_data() {
     }
 }
 
-std::tuple<int, char *> BackendAdapter::register_sensor() {
+std::tuple<int, const char *> BackendAdapter::register_sensor() {
     Serial.println("[INFO] Fetching sensor_id from backend");
     int fetched_id = -1;
     char *fetched_key = NULL;
@@ -64,8 +69,7 @@ std::tuple<int, char *> BackendAdapter::register_sensor() {
     doc[SENSOR_REGISTER_DTO_NAME] = SENSOR_NAME;
     size_t written = serializeJson(doc, body_buffer);
     if (written == 0 || written >= sizeof(body_buffer)) {
-        Serial.print("[ERROR] Failed serializing agent body, written bytes: ");
-        Serial.println(written);
+        Serial.print("[ERROR] Failed serializing agent body");
         return std::make_tuple(fetched_id, fetched_key);
     }
 
@@ -99,7 +103,7 @@ std::tuple<int, char *> BackendAdapter::register_sensor() {
     return std::make_tuple(fetched_id, fetched_key);
 }
 
-bool BackendAdapter::register_agent(int id, char *key, const char *domain, const char *agent) {
+bool BackendAdapter::register_agent(int id, const char *key, const char *domain, const char *agent) {
     Serial.println("[INFO] Registering agent from backend");
 
     // Convert id to string
