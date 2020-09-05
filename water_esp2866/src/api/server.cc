@@ -39,6 +39,10 @@ void ConfigServer::loop() {
     auto up_delta = millis() - start_time;
     if (up_delta > CONFIG_SERVER_UPTIME) {
         ConfigServer::end();
+    } else {
+        int up_secs = (CONFIG_SERVER_UPTIME - up_delta) / 1000;
+        Serial.print("[INFO] Webserver is online for secs: ");
+        Serial.println(up_secs);
     }
 }
 
