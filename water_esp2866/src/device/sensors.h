@@ -6,6 +6,6 @@
 
 class Sensor {
    public:
-    static void set_water(bool on);
+    static void set_water(int32_t on);
     static int read_moisture();
 };

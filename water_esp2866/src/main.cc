@@ -3,6 +3,7 @@
 
 #include "api/backend.h"
 #include "api/dto.h"
+#include "api/offline_agent.h"
 #include "api/server.h"
 #include "constants.h"
 #include "device/access_point.h"
@@ -17,18 +18,10 @@ static bool is_online;
 static bool wifi_settings_updated;
 
 void mqtt_callback(char *topic, byte *payload, unsigned int length) {
-    char msg[length + 1];
-    memccpy(msg, payload, '\0', length);
-    msg[length] = '\0';
-
-    DeserializationError error = deserializeJson(cmdMsgBuffer, msg);
-    if (error) {
-        Serial.println("[ERROR] Failed to deserialize backend response");
-    } else {
-        const char *domain = cmdMsgBuffer["domain"];
-        if (strcmp(domain, SENSOR_WATER_DOMAIN) == 0) {
-            Sensor::set_water(cmdMsgBuffer["payload"]);
-        }
+    // Each command has a int32_t payload
+    int32_t *commands = (int32_t *)payload;
+    for (size_t i = 0; i < sizeof(AGENTS) / sizeof(AGENTS[0]); i++) {
+        AGENTS[i].callback(commands[i]);
     }
 }
 
@@ -49,6 +42,9 @@ void server_config_callback(const char *ssid, const char *pwd) {
 
 void setup() {
     Serial.begin(9600);
+    delay(100);
+    pinMode(WATER_RELAY, OUTPUT);
+    delay(100);
 
     settings.setup();
     // Check if we have wifi connection
@@ -59,10 +55,8 @@ void setup() {
         // Wind up accessPoint with server
         AccessPoint::enable();
         ConfigServer::start(server_config_callback, server_teardown_callback);
-        // TODO: offline_agent::setup()
+        OfflineAgent::setup();
     }
-
-    pinMode(WATER_RELAY, OUTPUT);
 }
 
 void check_settings_updated() {
@@ -74,12 +68,12 @@ void check_settings_updated() {
         if (is_online) {
             ConfigServer::end();
             Mqtt::setup(mqtt_callback);
-            // TODO: offline_agent::stop()
+            OfflineAgent::stop();
         } else {
             // try again..
             AccessPoint::enable();
             ConfigServer::start(server_config_callback, server_teardown_callback);
-            // TODO: offline_agent::setup()
+            OfflineAgent::setup();
         }
     }
 }
@@ -93,8 +87,8 @@ void loop() {
         BackendAdapter::send_data();  // Send sensor data - if necessary
         delay(1000);                  // Stay responsive
     } else {
-        // TODO: offline_agent::loop()
+        OfflineAgent::loop();
         ConfigServer::loop();  // Disable AP after a few minutes
-        delay(5000);           // Stay not so responsive
+        delay(5000);           // Stay not so responsive - better battery
     }
 }

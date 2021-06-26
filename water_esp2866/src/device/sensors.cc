@@ -1,6 +1,6 @@
 #include "sensors.h"
 
-void Sensor::set_water(bool on) {
+void Sensor::set_water(int32_t on) {
     if (on) {
         Serial.println("[INFO] Water on");
         digitalWrite(WATER_RELAY, HIGH);

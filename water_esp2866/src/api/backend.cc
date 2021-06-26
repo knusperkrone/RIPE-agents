@@ -16,11 +16,14 @@ bool BackendAdapter::setup(int tries) {
             return BackendAdapter::setup(tries);  // Recurse or die
         } else {
             // Register agents
-            while (!BackendAdapter::register_agent(sensor_id, sensor_key, SENSOR_WATER_DOMAIN, SENSOR_WATER_AGENT)) {
-                if (tries-- == 0) {
-                    return false;
+            for (size_t i = 0; i < sizeof(AGENTS) / sizeof(AGENTS[0]); i++) {
+                auto config = AGENTS[i];
+                while (!BackendAdapter::register_agent(sensor_id, sensor_key, config.domain, config.agent)) {
+                    if (tries-- == 0) {
+                        return false;
+                    }
+                    delay(250);
                 }
-                delay(250);
             }
             settings.set_sensor_config(sensor_id, sensor_key);
         }

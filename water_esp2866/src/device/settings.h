@@ -6,7 +6,7 @@
 #include "constants.h"
 #include "utils.h"
 
-#define CANARY (unsigned long)0xc0ffee + 10
+#define CANARY (unsigned long)0xc0ffee + 12
 
 #define SENSOR_CANARY_OFFSET 0
 #define ID_OFFSET SENSOR_CANARY_OFFSET + sizeof(unsigned long)

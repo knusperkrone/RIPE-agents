@@ -1,11 +1,20 @@
+#pragma once
+#include <stdint.h>
+
+struct AgentConfig {
+    const char* domain;
+    const char* agent;
+    void (*callback)(int32_t);
+};
+
 // MQTT BROKER SETTINGS
-#define MQTT_BROKER "18.196.113.35"
+#define MQTT_BROKER "http://retroapp.if-lab.de"
 #define MQTT_PORT 1883
 #define MQTT_NAME_PREFIX "WaterSensor_"
 
 // BACKEND SETTINGS
 //#define BACKEND_URL "http://192.168.1.57:8000"
-#define BACKEND_URL "http://192.168.178.47:8000"
+#define BACKEND_URL "http://retroapp.if-lab.de:8000"
 // BACKEND CONSTATNS
 #define BACKEND_SENSOR_PATH "/api/sensor"
 #define BACKEND_AGENT_PATH "/api/agent"
@@ -19,10 +28,9 @@
 // SENSOR CONFIG
 #define SEND_TIMEOUT_MS 30 * 1000
 #define SENSOR_NAME "REFERENCE_SENSOR"
-#define SENSOR_WATER_DOMAIN "water"
-#define SENSOR_WATER_AGENT "ThresholdAgent"
 #define WATER_RELAY D8
 #define MOISTURE_SENSOR A0
+extern const AgentConfig AGENTS[1];
 
 // WLAN NETWORK
 #define WLAN_SSID "InterFace-Bewässerung"
