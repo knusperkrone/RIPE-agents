@@ -1,5 +1,6 @@
 import json
 import time as t
+from datetime import datetime
 
 import paho.mqtt.client as mqtt
 import requests as r
@@ -10,6 +11,7 @@ from .model import SensorData
 # Constants
 COMMAND_TOPIC = 'sensor/cmd'
 DATA_TOPIC = 'sensor/data'
+LOG_TOPIC = 'sensor/log'
 DISCONNECT_TOPIC = 'ripe/master'
 # BASE_URL = 'http://192.168.178.22:8000/api'
 BASE_URL = 'http://ripe.feste-ip.net:35962/api'
@@ -22,18 +24,16 @@ class MqttContext:
         self.key = sensor_key
 
     def connect(self):
-        print("Connecting .", end='', flush=True)
+        print(f"[{datetime.now().ctime()}] Connecting .", end='', flush=True)
         broker: str = None
         while broker is None:
             # done in a while, as backend may be temporary unavailable
             try:
                 print('.', end='', flush=True)
-                broker = self.fetch_sensor_broker()
+                broker = self._fetch_sensor_broker()
             except Exception:
                 t.sleep(0.5)
-                continue
-        print()
-        print(f"Assigned broker {broker}")
+        print(f"[{datetime.now().ctime()}] Assigned broker {broker}")
 
         if broker.startswith('tcp://'):
             broker = broker[len('tcp://')::]
@@ -54,30 +54,31 @@ class MqttContext:
             f'{DATA_TOPIC}/{self.id}/{self.key}', payload=data.json()
         )
 
+    def log(self, msg: str):
+        print(f'[{datetime.now().ctime()}] {msg}')
+        self.client.publish(f'{LOG_TOPIC}/{self.id}/{self.key}', payload=msg)
+
     def clear_callbacks(self):
         self.client.on_connect = None
         self.client.on_disconnect = None
         self.client.on_message = None
 
-    def is_connected(self):
-        self.client.is_connected()
-
-    def fetch_sensor_broker(self):
+    def _fetch_sensor_broker(self):
         return r.get(f'{BASE_URL}/sensor/{self.id}/{self.key}').json()['broker']
 
 
 def on_mqtt_connect(client: mqtt.Client, userdata, flags, rc):
-    print("Mqtt connected")
+    mqtt_context.log(f"Mqtt connected")
 
 
 def on_mqtt_disconnect(client: mqtt.Client, userdata, rc):
-    print("Mqtt disconnected - reconnecting")
+    mqtt_context.log(f"Mqtt disconnected - reconnecting")
     mqtt_context.connect()
 
 
 def on_mqtt_message(client: mqtt.Client, userdata, message: mqtt.MQTTMessage):
     topic: str = message.topic
-    print(f"On message {topic}")
+    mqtt_context.log(f"CMD: {topic} {message.payload}")
     if topic == DISCONNECT_TOPIC:
         print("Broker master disconnected - reconnecting on new broker")
         mqtt_context.clear_callbacks()
@@ -103,13 +104,9 @@ def kickoff():
     mqtt_context.connect()
 
     while True:
-        # if  mqtt_context.is_connected():
-        #    continue
-
-        # Fetch payload, convert to json and publish
         try:
             payload = custom_device.get_sensor_data()
-            print("publish")
+            mqtt_context.log("published sensordata")
             mqtt_context.publish(payload)
         except Exception as e:
             print(f"Failed publishing", e)

@@ -76,7 +76,7 @@ class Device(BaseDevice):
             gpios = json.load(gpio_file)
             water_gpio = gpios['water']
             light_gpio = gpios['light']
-        
+
         self.light_relay = RelayDevice(water_gpio)
         self.water_relay = RelayDevice(light_gpio)
 
