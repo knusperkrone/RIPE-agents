@@ -109,7 +109,7 @@ def kickoff():
             mqtt_context.log("published sensordata")
             mqtt_context.publish(payload)
         except Exception as e:
-            print(f"Failed publishing", e)
+            mqtt_context.log(f"Failed publishing {e.__class__}")
 
         # timeout
         t.sleep(60)
