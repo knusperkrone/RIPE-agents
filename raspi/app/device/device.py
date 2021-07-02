@@ -88,10 +88,10 @@ class Device(BaseDevice):
         sensor_key = r.json()['key']
 
         # register device specific agents
-        r = re.post(f'{BASE_URL}/agent/{sensor_id}/{sensor_key}',
+        r = re.post(f'{BASE_URL}/agent/{sensor_id}', headers={'X-KEY': sensor_key},
                     json={"domain": "01_Licht", "agent_name": "TimeAgent"})
 
-        r = re.post(f'{BASE_URL}/agent/{sensor_id}/{sensor_key}',
+        r = re.post(f'{BASE_URL}/agent/{sensor_id}', headers={'X-KEY': sensor_key},
                     json={"domain": "02_Wasser", "agent_name": "ThresholdAgent"})
         return (sensor_id, sensor_key)
 

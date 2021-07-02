@@ -13,8 +13,8 @@ COMMAND_TOPIC = 'sensor/cmd'
 DATA_TOPIC = 'sensor/data'
 LOG_TOPIC = 'sensor/log'
 DISCONNECT_TOPIC = 'ripe/master'
-# BASE_URL = 'http://192.168.178.22:8000/api'
-BASE_URL = 'http://ripe.feste-ip.net:35962/api'
+BASE_URL = 'http://192.168.178.22:8000/api'
+# BASE_URL = 'http://ripe.feste-ip.net:35962/api'
 
 
 class MqttContext:
@@ -31,7 +31,8 @@ class MqttContext:
             try:
                 print('.', end='', flush=True)
                 broker = self._fetch_sensor_broker()
-            except Exception:
+            except Exception as e:
+                print(e)
                 t.sleep(0.5)
         print(f"[{datetime.now().ctime()}] Assigned broker {broker}")
 
@@ -64,7 +65,7 @@ class MqttContext:
         self.client.on_message = None
 
     def _fetch_sensor_broker(self):
-        return r.get(f'{BASE_URL}/sensor/{self.id}/{self.key}').json()['broker']
+        return r.get(f'{BASE_URL}/sensor/{self.id}', headers={'X-KEY': self.key}).json()['broker']
 
 
 def on_mqtt_connect(client: mqtt.Client, userdata, flags, rc):
