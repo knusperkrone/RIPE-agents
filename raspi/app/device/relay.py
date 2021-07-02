@@ -30,3 +30,18 @@ class RelayDevice:
             self.enable()
         else:
             self.disable()
+
+class PWMDevice:
+
+    def __init__(self, gpio_write: int, gpio_control: int):
+        GPIO.setmode(GPIO.BCM)
+        self.gpio_write = gpio_write
+        self.gpio_control = gpio_control
+        GPIO.setup(self.gpio_write, GPIO.OUT)
+        self.pwm = GPIO.PWM(self.gpio_write, 23)
+        self.pwm.start(0)
+        self.pwm_speed = 0
+
+    def set_speed(self, speed: int):
+        self.pwm_speed = speed
+        self.pwm.ChangeDutyCycle(speed)

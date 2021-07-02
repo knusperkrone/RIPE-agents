@@ -107,4 +107,4 @@ def kickoff():
             mqtt_context.log(f"Failed publishing {e.__class__}")
 
         # timeout
-        t.sleep(60)
+        t.sleep(120)

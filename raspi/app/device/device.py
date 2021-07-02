@@ -12,7 +12,7 @@ from miflora import miflora_poller
 
 from ..backend import register_agent, register_sensor
 from ..model import SensorData
-from .relay import RelayDevice
+from .relay import PWMDevice, RelayDevice
 
 try:
     import RPi.GPIO as GPIO
@@ -76,17 +76,20 @@ class Device(BaseDevice):
             gpios = json.load(gpio_file)
             water_gpio = gpios['water']
             light_gpio = gpios['light']
+            (pwm_wg, pwm_cp) = tuple(gpios['pwm'])
 
         self.light_relay = RelayDevice(water_gpio)
         self.water_relay = RelayDevice(light_gpio)
+        self.pwm_device = PWMDevice(pwm_wg, pwm_cp)
 
     def register_backend(self) -> (int, str):
         '''Actual backend calls to register the sensor and the specific agents (ordered alpabetically)'''
         (sensor_id, sensor_key) = register_sensor()
-    
+
         # register device specific agents
         register_agent(sensor_id, sensor_key, "01_Licht", "TimeAgent")
         register_agent(sensor_id, sensor_key, "02_Wasser", "ThresholdAgent")
+        register_agent(sensor_id, sensor_key, "03_PWM", "PercentAgent")
 
         return (sensor_id, sensor_key)
 
@@ -99,8 +102,9 @@ class Device(BaseDevice):
         elif agent_index == 1:
             print(f"water: {state}")
             self.water_relay.set_state(state)
-        else:
-            print(f'Invalid agent index: {agent_index}')
+        elif agent_index == 2:
+            print(f"pwm: {cmd}")
+            self.pwm_device.set_speed(cmd)
 
     def get_sensor_data(self) -> SensorData:
         '''Fetches fres, uncached data from the xiamo sensor'''
