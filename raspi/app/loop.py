@@ -5,6 +5,7 @@ from datetime import datetime
 import paho.mqtt.client as mqtt
 import requests as r
 
+from .backend import fetch_sensor_broker
 from .device.device import Device
 from .model import SensorData
 
@@ -13,8 +14,6 @@ COMMAND_TOPIC = 'sensor/cmd'
 DATA_TOPIC = 'sensor/data'
 LOG_TOPIC = 'sensor/log'
 DISCONNECT_TOPIC = 'ripe/master'
-BASE_URL = 'http://192.168.178.22:8000/api'
-# BASE_URL = 'http://ripe.feste-ip.net:35962/api'
 
 
 class MqttContext:
@@ -30,9 +29,8 @@ class MqttContext:
             # done in a while, as backend may be temporary unavailable
             try:
                 print('.', end='', flush=True)
-                broker = self._fetch_sensor_broker()
+                broker = fetch_sensor_broker(self.id, self.key)
             except Exception as e:
-                print(e)
                 t.sleep(0.5)
         print(f"[{datetime.now().ctime()}] Assigned broker {broker}")
 
@@ -63,10 +61,6 @@ class MqttContext:
         self.client.on_connect = None
         self.client.on_disconnect = None
         self.client.on_message = None
-
-    def _fetch_sensor_broker(self):
-        return r.get(f'{BASE_URL}/sensor/{self.id}', headers={'X-KEY': self.key}).json()['broker']
-
 
 def on_mqtt_connect(client: mqtt.Client, userdata, flags, rc):
     mqtt_context.log(f"Mqtt connected")

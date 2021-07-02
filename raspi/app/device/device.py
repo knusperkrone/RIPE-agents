@@ -7,10 +7,10 @@ import json
 import time as time
 from abc import ABC, abstractmethod
 
-import requests as re
 from btlewrap.bluepy import BluepyBackend
 from miflora import miflora_poller
 
+from ..backend import register_agent, register_sensor
 from ..model import SensorData
 from .relay import RelayDevice
 
@@ -82,17 +82,12 @@ class Device(BaseDevice):
 
     def register_backend(self) -> (int, str):
         '''Actual backend calls to register the sensor and the specific agents (ordered alpabetically)'''
-        from ..loop import BASE_URL
-        r = re.post(f'{BASE_URL}/sensor', json={})
-        sensor_id = r.json()['id']
-        sensor_key = r.json()['key']
-
+        (sensor_id, sensor_key) = register_sensor()
+    
         # register device specific agents
-        r = re.post(f'{BASE_URL}/agent/{sensor_id}', headers={'X-KEY': sensor_key},
-                    json={"domain": "01_Licht", "agent_name": "TimeAgent"})
+        register_agent(sensor_id, sensor_key, "01_Licht", "TimeAgent")
+        register_agent(sensor_id, sensor_key, "02_Wasser", "ThresholdAgent")
 
-        r = re.post(f'{BASE_URL}/agent/{sensor_id}', headers={'X-KEY': sensor_key},
-                    json={"domain": "02_Wasser", "agent_name": "ThresholdAgent"})
         return (sensor_id, sensor_key)
 
     def on_agent_cmd(self, agent_index: int, cmd: int):
