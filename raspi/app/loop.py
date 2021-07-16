@@ -5,7 +5,7 @@ from datetime import datetime
 import paho.mqtt.client as mqtt
 import requests as r
 
-from .backend import fetch_sensor_broker
+from .backend import BackendAdapter
 from .device.device import Device
 from .model import SensorData
 
@@ -15,24 +15,27 @@ DATA_TOPIC = 'sensor/data'
 LOG_TOPIC = 'sensor/log'
 DISCONNECT_TOPIC = 'ripe/master'
 
+DEFAULT_URL = 'http://localhost:8080/api'
 
 class MqttContext:
-    def __init__(self, sensor_id: int, sensor_key: str):
+    def __init__(self, adapter: BackendAdapter, sensor_id: int, sensor_key: str):
         super().__init__()
+        self.adapter = adapter
         self.id = sensor_id
         self.key = sensor_key
 
     def connect(self):
-        print(f"[{datetime.now().ctime()}] Connecting .", end='', flush=True)
+        print(f"[{datetime.utcnow().ctime()} UTC] Connecting .",
+              end='', flush=True)
         broker: str = None
         while broker is None:
             # done in a while, as backend may be temporary unavailable
             try:
                 print('.', end='', flush=True)
-                broker = fetch_sensor_broker(self.id, self.key)
+                broker = self.adapter.fetch_sensor_broker(self.id, self.key)
             except Exception as e:
                 t.sleep(0.5)
-        print(f"[{datetime.now().ctime()}] Assigned broker {broker}")
+        print(f"[{datetime.utcnow().ctime()} UTC] Assigned broker {broker}")
 
         if broker.startswith('tcp://'):
             broker = broker[len('tcp://')::]
@@ -54,13 +57,14 @@ class MqttContext:
         )
 
     def log(self, msg: str):
-        print(f'[{datetime.now().ctime()}] {msg}')
+        print(f'[{datetime.utcnow().ctime()} UTC] {msg}')
         self.client.publish(f'{LOG_TOPIC}/{self.id}/{self.key}', payload=msg)
 
     def clear_callbacks(self):
         self.client.on_connect = None
         self.client.on_disconnect = None
         self.client.on_message = None
+
 
 def on_mqtt_connect(client: mqtt.Client, userdata, flags, rc):
     mqtt_context.log(f"Mqtt connected")
@@ -88,14 +92,15 @@ custom_device: Device = None
 mqtt_context: MqttContext = None
 
 
-def kickoff():
+def kickoff(base_url: str = DEFAULT_URL):
     global custom_device, mqtt_context
+    adapter = BackendAdapter(base_url)
 
-    custom_device = Device()
+    custom_device = Device(adapter)
     sensor_id, sensor_key = custom_device.get_creds()
-    print(f"[Sensor {sensor_id}]")
+    print(f"[Sensor {sensor_id} with {base_url}]")
 
-    mqtt_context = MqttContext(sensor_id, sensor_key)
+    mqtt_context = MqttContext(adapter, sensor_id, sensor_key)
     mqtt_context.connect()
 
     while True:

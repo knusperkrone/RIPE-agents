@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from btlewrap.bluepy import BluepyBackend
 from miflora import miflora_poller
 
-from ..backend import register_agent, register_sensor
+from ..backend import BackendAdapter
 from ..model import SensorData
 from .relay import PWMDevice, RelayDevice
 
@@ -25,8 +25,9 @@ MIFLORA_MAC = 'C4:7C:8D:6B:C3:48'
 
 
 class BaseDevice(ABC):
-    def __init__(self):
+    def __init__(self, adapter: BackendAdapter):
         '''Eager init sensor credetials'''
+        self.adapter = adapter
         self.register_sensor()
 
     def register_sensor(self):
@@ -61,9 +62,9 @@ class BaseDevice(ABC):
 
 
 class Device(BaseDevice):
-    def __init__(self):
+    def __init__(self, adapter: BackendAdapter):
         '''Setups miflora sensor and GPIOs'''
-        super().__init__()
+        super().__init__(adapter)
         # Init xiamio sensor
         self.poller = miflora_poller.MiFloraPoller(MIFLORA_MAC, BluepyBackend)
 
@@ -84,12 +85,15 @@ class Device(BaseDevice):
 
     def register_backend(self) -> (int, str):
         '''Actual backend calls to register the sensor and the specific agents (ordered alpabetically)'''
-        (sensor_id, sensor_key) = register_sensor()
+        (sensor_id, sensor_key) = self.adapter.register_sensor()
 
         # register device specific agents
-        register_agent(sensor_id, sensor_key, "01_Licht", "TimeAgent")
-        register_agent(sensor_id, sensor_key, "02_Wasser", "ThresholdAgent")
-        register_agent(sensor_id, sensor_key, "03_PWM", "PercentAgent")
+        self.adapter.register_agent(
+            sensor_id, sensor_key, "01_Licht", "TimeAgent")
+        self.adapter.register_agent(
+            sensor_id, sensor_key, "02_Wasser", "ThresholdAgent")
+        self.adapter.register_agent(
+            sensor_id, sensor_key, "03_PWM", "PercentAgent")
 
         return (sensor_id, sensor_key)
 
