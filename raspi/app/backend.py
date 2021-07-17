@@ -17,4 +17,5 @@ class BackendAdapter:
                 json={"domain": domain, "agent_name": agent})
 
     def fetch_sensor_broker(self, sensor_id: int, sensor_key: str) -> str:
-        return re.get(f'{self.base_url}/sensor/{sensor_id}', headers={'X-KEY': sensor_key}).json()['broker']
+        r = re.get(f'{self.base_url}/sensor/{sensor_id}', headers={'X-KEY': sensor_key})
+        return r.json()['broker']

@@ -17,6 +17,7 @@ DISCONNECT_TOPIC = 'ripe/master'
 
 DEFAULT_URL = 'http://localhost:8080/api'
 
+
 class MqttContext:
     def __init__(self, adapter: BackendAdapter, sensor_id: int, sensor_key: str):
         super().__init__()
@@ -44,7 +45,7 @@ class MqttContext:
         self.client.connect(parts[0], int(parts[1]))
 
         # listen mqtt-commands and register callbackss
-        self.client.on_connect = on_mqtt_connect
+        self.client.on_connect = lambda _cli, _, __, ___: self._on_mqtt_connect()
         self.client.on_disconnect = on_mqtt_disconnect
         self.client.on_message = on_mqtt_message
         self.client.subscribe(f'{COMMAND_TOPIC}/{self.id}/{self.key}')
@@ -66,8 +67,9 @@ class MqttContext:
         self.client.on_message = None
 
 
-def on_mqtt_connect(client: mqtt.Client, userdata, flags, rc):
-    mqtt_context.log(f"Mqtt connected")
+    def _on_mqtt_connect(self):
+        mqtt_context.log(f"Mqtt connected")
+        self.client.will_set(f'{LOG_TOPIC}/{self.id}/{self.key}', payload='Lost connection')
 
 
 def on_mqtt_disconnect(client: mqtt.Client, userdata, rc):
