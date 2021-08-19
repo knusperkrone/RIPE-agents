@@ -1,5 +1,6 @@
 import json
 import time as t
+import traceback
 from datetime import datetime
 
 import paho.mqtt.client as mqtt
@@ -19,9 +20,10 @@ DEFAULT_URL = 'http://localhost:8080/api'
 
 
 class MqttContext:
-    def __init__(self, adapter: BackendAdapter, sensor_id: int, sensor_key: str):
+    def __init__(self, adapter: BackendAdapter, device: Device, sensor_id: int, sensor_key: str):
         super().__init__()
         self.adapter = adapter
+        self.device = device
         self.id = sensor_id
         self.key = sensor_key
 
@@ -40,16 +42,17 @@ class MqttContext:
 
         if broker.startswith('tcp://'):
             broker = broker[len('tcp://')::]
-        parts = broker.split(':')
+        parts = broker.split(':')  
+              
+        if self.client is not None:
+            self.client.loop_stop()
         self.client: mqtt.Client = mqtt.Client()
         self.client.connect(parts[0], int(parts[1]))
 
         # listen mqtt-commands and register callbackss
         self.client.on_connect = lambda _cli, _, __, ___: self._on_mqtt_connect()
-        self.client.on_disconnect = on_mqtt_disconnect
-        self.client.on_message = on_mqtt_message
-        self.client.subscribe(f'{COMMAND_TOPIC}/{self.id}/{self.key}')
-        self.client.subscribe(f'{DISCONNECT_TOPIC}')
+        self.client.on_disconnect = lambda _cli, _, __, ___: self._on_mqtt_disconnect()
+        self.client.on_message = lambda _, __, msg: self._on_mqtt_message(msg)
         self.client.loop_start()
 
     def publish(self, data: SensorData):
@@ -66,52 +69,53 @@ class MqttContext:
         self.client.on_disconnect = None
         self.client.on_message = None
 
-
     def _on_mqtt_connect(self):
-        mqtt_context.log(f"Mqtt connected")
-        self.client.will_set(f'{LOG_TOPIC}/{self.id}/{self.key}', payload='Lost connection')
+        # Notfy master about self disconnect
+        self.client.will_set(
+            f'{LOG_TOPIC}/{self.id}/{self.key}',
+            payload='Lost connection'
+        )
+        # Get notified about master disconnect
+        self.client.subscribe(f'{DISCONNECT_TOPIC}')
+        # listen commands
+        self.client.subscribe(f'{COMMAND_TOPIC}/{self.id}/{self.key}')
 
+        self.log(f"Mqtt connected")
 
-def on_mqtt_disconnect(client: mqtt.Client, userdata, rc):
-    mqtt_context.log(f"Mqtt disconnected - reconnecting")
-    mqtt_context.connect()
+    def _on_mqtt_disconnect(self):
+        self.log(f"Mqtt disconnected - reconnecting")
+        self.connect()
 
-
-def on_mqtt_message(client: mqtt.Client, userdata, message: mqtt.MQTTMessage):
-    topic: str = message.topic
-    mqtt_context.log(f"CMD: {topic} {message.payload}")
-    if topic == DISCONNECT_TOPIC:
-        print("Broker master disconnected - reconnecting on new broker")
-        mqtt_context.clear_callbacks()
-        mqtt_context.connect()
-    else:
-        for i in range(len(message.payload)):
-            custom_device.on_agent_cmd(i, message.payload[i])
-
-
-# global objects
-custom_device: Device = None
-mqtt_context: MqttContext = None
+    def on_mqtt_message(self,  message: mqtt.MQTTMessage):
+        topic: str = message.topic
+        self.log(f"CMD: {topic} {message.payload}")
+        if topic == DISCONNECT_TOPIC:
+            self.log("Broker master disconnected - reconnecting on new broker")
+            self.clear_callbacks()
+            self.connect()
+        else:
+            for i in range(len(message.payload)):
+                self.device.on_agent_cmd(i, message.payload[i])
 
 
 def kickoff(base_url: str = DEFAULT_URL):
-    global custom_device, mqtt_context
     adapter = BackendAdapter(base_url)
+    device = Device(adapter)
 
-    custom_device = Device(adapter)
-    sensor_id, sensor_key = custom_device.get_creds()
+    sensor_id, sensor_key = device.get_creds()
     print(f"[Sensor {sensor_id} with {base_url}]")
 
-    mqtt_context = MqttContext(adapter, sensor_id, sensor_key)
+    mqtt_context = MqttContext(adapter, device, sensor_id, sensor_key)
     mqtt_context.connect()
 
     while True:
         try:
-            payload = custom_device.get_sensor_data()
-            mqtt_context.log("published sensordata")
+            payload = device.get_sensor_data()
             mqtt_context.publish(payload)
+            mqtt_context.log("published sensordata")
         except Exception as e:
             mqtt_context.log(f"Failed publishing {e.__class__}")
+            traceback.print_tb(e.__traceback__)
 
         # timeout
         t.sleep(120)
