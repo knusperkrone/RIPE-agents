@@ -16,7 +16,7 @@ DATA_TOPIC = 'sensor/data'
 LOG_TOPIC = 'sensor/log'
 DISCONNECT_TOPIC = 'ripe/master'
 
-DEFAULT_URL = 'http://localhost:8080/api'
+DEFAULT_URL = 'http://ripeold.feste-ip.net:50729/api'
 
 
 class MqttContext:
@@ -26,6 +26,7 @@ class MqttContext:
         self.device = device
         self.id = sensor_id
         self.key = sensor_key
+        self.client: mqtt.Client = None
 
     def connect(self):
         print(f"[{datetime.utcnow().ctime()} UTC] Connecting .",
@@ -42,17 +43,19 @@ class MqttContext:
 
         if broker.startswith('tcp://'):
             broker = broker[len('tcp://')::]
-        parts = broker.split(':')  
-              
+        (uri, portStr) = broker.split(':')  
+
         if self.client is not None:
+            self._clear_callbacks()
             self.client.loop_stop()
         self.client: mqtt.Client = mqtt.Client()
-        self.client.connect(parts[0], int(parts[1]))
-
+        
         # listen mqtt-commands and register callbackss
         self.client.on_connect = lambda _cli, _, __, ___: self._on_mqtt_connect()
-        self.client.on_disconnect = lambda _cli, _, __, ___: self._on_mqtt_disconnect()
+        self.client.on_disconnect = lambda _cli, _, __: self._on_mqtt_disconnect()
         self.client.on_message = lambda _, __, msg: self._on_mqtt_message(msg)
+        
+        self.client.connect(uri, int(portStr), keepalive=10)
         self.client.loop_start()
 
     def publish(self, data: SensorData):
@@ -64,7 +67,7 @@ class MqttContext:
         print(f'[{datetime.utcnow().ctime()} UTC] {msg}')
         self.client.publish(f'{LOG_TOPIC}/{self.id}/{self.key}', payload=msg)
 
-    def clear_callbacks(self):
+    def _clear_callbacks(self):
         self.client.on_connect = None
         self.client.on_disconnect = None
         self.client.on_message = None
@@ -86,12 +89,11 @@ class MqttContext:
         self.log(f"Mqtt disconnected - reconnecting")
         self.connect()
 
-    def on_mqtt_message(self,  message: mqtt.MQTTMessage):
+    def _on_mqtt_message(self,  message: mqtt.MQTTMessage):
         topic: str = message.topic
         self.log(f"CMD: {topic} {message.payload}")
         if topic == DISCONNECT_TOPIC:
             self.log("Broker master disconnected - reconnecting on new broker")
-            self.clear_callbacks()
             self.connect()
         else:
             for i in range(len(message.payload)):
