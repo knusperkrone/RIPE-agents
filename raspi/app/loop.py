@@ -1,4 +1,5 @@
 import json
+import threading
 import time as t
 import traceback
 from datetime import datetime
@@ -43,20 +44,28 @@ class MqttContext:
 
         if broker.startswith('tcp://'):
             broker = broker[len('tcp://')::]
-        (uri, portStr) = broker.split(':')  
+        (uri, portStr) = broker.split(':')
 
         if self.client is not None:
             self._clear_callbacks()
             self.client.loop_stop()
-        self.client: mqtt.Client = mqtt.Client()
-        
+        self.client = mqtt.Client()
+
         # listen mqtt-commands and register callbackss
+        is_connected = False
         self.client.on_connect = lambda _cli, _, __, ___: self._on_mqtt_connect()
         self.client.on_disconnect = lambda _cli, _, __: self._on_mqtt_disconnect()
         self.client.on_message = lambda _, __, msg: self._on_mqtt_message(msg)
-        
+
         self.client.connect(uri, int(portStr), keepalive=10)
         self.client.loop_start()
+
+        curr_client = self.client
+        def timeout_fn():
+            if not curr_client.is_connected():
+                print("Client is not connected - retrying")
+                self.connect()
+        threading.Timer(10, timeout_fn).start()
 
     def publish(self, data: SensorData):
         self.client.publish(
