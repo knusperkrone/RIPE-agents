@@ -10,7 +10,7 @@ class SensorData:
         self.temperature = temperature
         self.conductivity = conductivity
 
-    def json(self) -> str:
+    def SensorData(self) -> str:
         return json.dumps({
             'battery': self.battery,
             'moisture': self.moisture,
