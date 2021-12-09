@@ -6,6 +6,7 @@ Example for an "Xiaomi miflora sensor" with GPIO controlled Relay.
 import json
 import time as time
 from abc import ABC, abstractmethod
+from typing import Tuple
 
 from btlewrap.bluepy import BluepyBackend
 from miflora import miflora_poller
@@ -45,7 +46,7 @@ class BaseDevice(ABC):
             self.id = sensor_id
             self.key = sensor_key
 
-    def get_creds(self) -> (int, str):
+    def get_creds(self) -> Tuple[int, str]:
         return (self.id, self.key)
 
     @abstractmethod
@@ -83,7 +84,7 @@ class Device(BaseDevice):
         self.water_relay = RelayDevice(light_gpio)
         self.pwm_device = PWMDevice(pwm_wg, pwm_cp)
 
-    def register_backend(self) -> (int, str):
+    def register_backend(self) -> Tuple[int, str]:
         '''Actual backend calls to register the sensor and the specific agents (ordered alpabetically)'''
         (sensor_id, sensor_key) = self.adapter.register_sensor()
 
@@ -99,7 +100,7 @@ class Device(BaseDevice):
 
     def on_agent_cmd(self, agent_index: int, cmd: int):
         '''Converts the recevived i64 into an actual command for the (alpabetically ordered) agent'''
-        state = cmd == 1
+        state = (cmd == 1)
         if agent_index == 0:
             print(f"light: {state}")
             self.light_relay.set_state(state)

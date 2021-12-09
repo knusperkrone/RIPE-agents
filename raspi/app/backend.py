@@ -1,3 +1,4 @@
+from typing import Tuple
 import requests as re
 
 
@@ -6,7 +7,7 @@ class BackendAdapter:
         super().__init__()
         self.base_url = base_url
 
-    def register_sensor(self) -> (int, str):
+    def register_sensor(self) -> Tuple[int, str]:
         r = re.post(f'{self.base_url}/sensor', json={})
         sensor_id = r.json()['id']
         sensor_key = r.json()['key']
