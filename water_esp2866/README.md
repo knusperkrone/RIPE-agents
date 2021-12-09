@@ -2,7 +2,9 @@
 
 Brings the RIPE protocoll to the nodemcu.
 
-Currently only watering is supportet
+Currently only watering is supported.
+
+The moisture data is fetched with an `Moisture Sensor v1.2`
 
 ## Development
 
