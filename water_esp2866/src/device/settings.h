@@ -6,12 +6,10 @@
 #include "constants.h"
 #include "utils.h"
 
-#define CANARY (unsigned long)0xc0ffee + 12
+#define CANARY (unsigned long)0xc0ffee + 1
 
 #define SENSOR_CANARY_OFFSET 0
-#define ID_OFFSET SENSOR_CANARY_OFFSET + sizeof(unsigned long)
-#define KEY_OFFSET ID_OFFSET + sizeof(unsigned long)
-#define WIFI_CANARY_OFFSET KEY_OFFSET + 12
+#define WIFI_CANARY_OFFSET 12
 #define SSID_OFFSET WIFI_CANARY_OFFSET + sizeof(unsigned long)
 #define PWD_OFFSET SSID_OFFSET + 36
 #define XXX_OFFSET PWD_OFFSET + 64
@@ -29,7 +27,6 @@ class Settings {
 
    private:
     char id_str_buffer[8];
-    char key_str_buffer[9];
     char ssid_str_buffer[36];
     char pwd_str_buffer[64];
 };

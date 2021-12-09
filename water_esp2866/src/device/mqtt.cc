@@ -2,8 +2,8 @@
 
 PubSubClient mqttClient(wifiClient);
 
-void Mqtt::setup(MQTT_CALLBACK_SIGNATURE) {
-    mqttClient.setServer(MQTT_BROKER, MQTT_PORT);
+void Mqtt::setup(MQTT_CALLBACK_SIGNATURE, const char *broker, int port) {
+    mqttClient.setServer(broker, port);
     mqttClient.setCallback(callback);
 }
 
@@ -48,7 +48,10 @@ void Mqtt::reconnect() {
         char cmdTopic[strlen(MQTT_CMD_PATH) + strlen(sensor_id) + 1];
         concat(cmdTopic, 4, MQTT_CMD_PATH, sensor_id, "/", sensor_key);
 
-        mqttClient.subscribe(cmdTopic);
-        Serial.println("[INFO] Connected MQTT");
+        while (!mqttClient.subscribe(cmdTopic)) {
+            Serial.println("[Error] Failed resubscribing MQTT, retrying");
+            delay(250);
+        }
+        Serial.println("[INFO] Subscribed MQTT topic");
     }
 }

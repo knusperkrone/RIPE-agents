@@ -14,9 +14,9 @@
 class BackendAdapter {
    public:
     static bool setup(int tries = 3);
-    static void send_data();
+    static std::tuple<const char *,int>fetch_mqtt_broker();
+    static void send_sensor_data();
 
    private:
-    static std::tuple<int, const char *> register_sensor();
-    static bool register_agent(int id, const char *key, const char *domain, const char *agent);
+    static String *commandTopic;
 };

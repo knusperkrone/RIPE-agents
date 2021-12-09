@@ -7,7 +7,7 @@ void AccessPoint::enable() {
         return;
     }
     AccessPoint::is_enabled = true;
-    WiFi.softAP(WLAN_SSID, NULL);
+    WiFi.softAP(WLAN_SSID "_" SENSOR_KEY, NULL);
 
     IPAddress IP = WiFi.softAPIP();
     Serial.print("[INFO] AP IP address: ");

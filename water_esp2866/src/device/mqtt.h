@@ -11,7 +11,7 @@
 
 class Mqtt {
    public:
-    static void setup(MQTT_CALLBACK_SIGNATURE);
+    static void setup(MQTT_CALLBACK_SIGNATURE, const char *broker, int port);
     static void loop();
     static void send(char *topic, char *payload);
 

@@ -17,12 +17,13 @@ void OfflineAgent::setup() {
 }
 
 void OfflineAgent::loop() {
-    long delta = millis() - OfflineAgent::last_watered;
+    long curr_ms = millis();
+    long delta = curr_ms - OfflineAgent::last_watered;
     if (OfflineAgent::active && delta > WATERING_MS) {
         OfflineAgent::stop();
     } else if (!OfflineAgent::active && delta > WATERING_HOLD_MS && Sensor::read_moisture() < MIN_MOISTURE) {
         OfflineAgent::active = true;
-        OfflineAgent::last_watered = millis();
+        OfflineAgent::last_watered = curr_ms;
         Sensor::set_water(true);
     }
 }

@@ -1,46 +1,26 @@
+# RIPE on the  ESP32 nodemcu
 
-This directory is intended for project specific (private) libraries.
-PlatformIO will compile them to static libraries and link into executable file.
+Brings the RIPE protocoll to the nodemcu.
 
-The source code of each library should be placed in a an own separate directory
-("lib/your_library_name/[here are source files]").
+Currently only watering is supportet
 
-For example, see a structure of the following two libraries `Foo` and `Bar`:
+## Development
 
-|--lib
-|  |
-|  |--Bar
-|  |  |--docs
-|  |  |--examples
-|  |  |--src
-|  |     |- Bar.c
-|  |     |- Bar.h
-|  |  |- library.json (optional, custom build options, etc) https://docs.platformio.org/page/librarymanager/config.html
-|  |
-|  |--Foo
-|  |  |- Foo.c
-|  |  |- Foo.h
-|  |
-|  |- README --> THIS FILE
-|
-|- platformio.ini
-|--src
-   |- main.c
+Install [Platformio Core](https://docs.platformio.org/en/latest/what-is-platformio.html) and execute `./build.sh`
 
-and a contents of `src/main.c`:
-```
-#include <Foo.h>
-#include <Bar.h>
+## Flash your own
 
-int main (void)
-{
-  ...
-}
+Execute `./build.sh register`.
+This will register a new Sensor and flashes the credentials on your ESP32.
 
-```
+One can read the credentials in the last line of the executed command.
 
-PlatformIO Library Dependency Finder will find automatically dependent
-libraries scanning project source files.
+After that the sensor can get controlled via the RIPE app.
 
-More information about PlatformIO Library Dependency Finder
-- https://docs.platformio.org/page/librarymanager/ldf.html
+## Customize
+
+One needs to customize the backend and the nodemcus usercode.
+
+1. Alter the `register.py` for adding a new agent. See [here](http://retroapp.if-lab.de:8000/api/agent), which agents are currently supported
+2. Edit the `main.cc::mqtt_callback` function in order to access the command bytes
+3. If one adds a new sensor(metric), this is done in `backend.cc::send_sensor_data`, just customize the JSON
