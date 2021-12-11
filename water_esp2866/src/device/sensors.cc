@@ -1,5 +1,11 @@
 #include "sensors.h"
 
+void Sensor::setup_pins() {
+    delay(100);
+    pinMode(WATER_RELAY, OUTPUT);
+    delay(100);
+}
+
 void Sensor::set_water(int32_t on) {
     if (on) {
         Serial.println("[INFO] Water on");

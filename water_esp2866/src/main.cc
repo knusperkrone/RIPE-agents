@@ -23,12 +23,11 @@ void mqtt_callback(char *topic, byte *payload, unsigned int length) {
 }
 
 void server_teardown_callback() {
-    // Server is shutting down
-    AccessPoint::disable();
+    AccessPoint::disable(); // Server is shutting down
 }
 
 void server_config_callback(const char *ssid, const char *pwd) {
-    // Server received message
+    // Server processed a messagein
     if (settings.set_wifi_config(ssid, pwd)) {
         Serial.println("[INFO] Saved new wifi config");
         isWifiSettingUpdated = true;  // Seems to be ISR context, so notfiy main thread
@@ -47,9 +46,7 @@ void connect_mqtt() {
 
 void setup() {
     Serial.begin(9600);
-    delay(100);
-    pinMode(WATER_RELAY, OUTPUT);
-    delay(100);
+    Sensor::setup_pins();
 
     settings.setup();
     // Check if we have wifi connection
