@@ -1,10 +1,10 @@
-# RIPE on the  ESP32 nodemcu
+# RIPE on the  ESP32 Nodemcu
 
-Brings the RIPE protocoll to the nodemcu.
+Bring the RIPE protocol to your Nodemcu.
 
-Currently only watering is supported.
+Currently, only watering is supported.
 
-The moisture data is fetched with an `Moisture Sensor v1.2`
+The moisture data is fetched with a `Moisture Sensor v1.2`
 
 ## Development
 
@@ -17,12 +17,12 @@ This will register a new Sensor and flashes the credentials on your ESP32.
 
 One can read the credentials in the last line of the executed command.
 
-After that the sensor can get controlled via the RIPE app.
+After that, the sensor can get controlled via the RIPE app.
 
 ## Customize
 
-One needs to customize the backend and the nodemcus usercode.
+One needs to customize the backend and the Nodemcus user code.
 
 1. Alter the `register.py` for adding a new agent. See [here](http://retroapp.if-lab.de:8000/api/agent), which agents are currently supported
-2. Edit the `main.cc::mqtt_callback` function in order to access the command bytes
+2. Edit the `main.cc::mqtt_callback` function to access the command bytes
 3. If one adds a new sensor(metric), this is done in `backend.cc::send_sensor_data`, just customize the JSON
