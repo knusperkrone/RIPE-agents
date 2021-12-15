@@ -23,7 +23,7 @@ void mqtt_callback(char *topic, byte *payload, unsigned int length) {
 }
 
 void server_teardown_callback() {
-    AccessPoint::disable(); // Server is shutting down
+    AccessPoint::disable();  // Server is shutting down
 }
 
 void server_config_callback(const char *ssid, const char *pwd) {
@@ -83,10 +83,10 @@ void check_settings_updated() {
 }
 
 void loop() {
+    isWifiSettingUpdated = Wifi::reconnect_if_necessary();
     check_settings_updated();
 
     if (isOnline) {
-        Wifi::reconnect();                   // Refresh wifi_connection - if necessary
         Mqtt::loop();                        // Check for new mqtt messages
         BackendAdapter::send_sensor_data();  // Send sensor data
         delay(1500);                         // Stay responsive

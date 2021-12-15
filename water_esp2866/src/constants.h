@@ -18,6 +18,9 @@ struct AgentConfig {
 #define MQTT_DATA_PATH "sensor/data/"
 #define MQTT_CMD_PATH "sensor/cmd/"
 
+// WIFI CONFIG
+#define RETRY_TIMEOUT_MS 45 * 1000
+
 // SENSOR CONFIG
 #define SEND_TIMEOUT_MS 30 * 1000
 #define SENSOR_NAME "REFERENCE_SENSOR"

@@ -1,16 +1,16 @@
 #include "wifi.h"
 
 WiFiClient wifiClient;
-boolean has_connection;
+int last_reconnect_ms = 0;
 
-bool Wifi::connect() {
-    if (WiFi.status() == WL_CONNECTED) {
+bool Wifi::connect(int tries) {
+    if (Wifi::hasConnection()) {
         return true;
     }
-    
+
     WiFi.begin(settings.get_wifi_ssid(), settings.get_wifi_pwd());
     int tries = 20;  // 10 seconds
-    while (WiFi.status() != WL_CONNECTED) {
+    while (!Wifi::hasConnection()) {
         delay(500);
         Serial.print(".");
         if (tries-- == 0) {
@@ -24,17 +24,23 @@ bool Wifi::connect() {
 
     Serial.print("[INFO] WiFi connected: ");
     Serial.println(WiFi.localIP());
-    has_connection = true;
     return true;
 }
 
 bool Wifi::hasConnection() {
-    return has_connection;
+    return WiFi.status() != WL_CONNECTED;
 }
 
-void Wifi::reconnect() {
-    if (has_connection && WiFi.status() != WL_CONNECTED) {
-        Serial.println("[WARN] Wifi was lost");
-        Wifi::connect();
+bool Wifi::reconnect_if_necessary() {
+    if (!Wifi::hasConnection()) {
+        return false;
     }
+
+    int curr_ms = millis();
+    if (curr_ms - last_reconnect_ms > RETRY_TIMEOUT_MS) {
+        last_reconnect_ms = curr_ms;
+        Serial.println("[INFO] Retrying WiFi connection");
+        return Wifi::connect();
+    }
+    return false;
 }

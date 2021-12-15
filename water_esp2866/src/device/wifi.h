@@ -7,8 +7,8 @@
 
 class Wifi {
    public:
-    static bool connect();
-    static void reconnect();
+    static bool connect(int tries = 20);
+    static bool reconnect_if_necessary();
     static bool hasConnection();
 };
 
