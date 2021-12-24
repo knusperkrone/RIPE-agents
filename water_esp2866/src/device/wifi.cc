@@ -4,18 +4,20 @@ WiFiClient wifiClient;
 int last_reconnect_ms = 0;
 
 bool Wifi::connect(int tries) {
-    if (Wifi::hasConnection()) {
-        return true;
-    }
-
+    Serial.print("[INFO] WiFi '");
+    Serial.print(settings.get_wifi_ssid());
+    Serial.print("' connecting ");
     WiFi.begin(settings.get_wifi_ssid(), settings.get_wifi_pwd());
+
     while (!Wifi::hasConnection()) {
         delay(500);
         Serial.print(".");
-        if (tries-- == 0) {
+        if (tries-- <= 0) {
             WiFi.disconnect();
             Serial.println();
-            Serial.println("[INFO] WiFi connection failed");
+            Serial.print("[INFO] WiFi connection failed [");
+            Serial.print(WiFi.status());
+            Serial.println("]");
             return false;
         }
     }
@@ -27,11 +29,11 @@ bool Wifi::connect(int tries) {
 }
 
 bool Wifi::hasConnection() {
-    return WiFi.status() != WL_CONNECTED;
+    return WiFi.status() == WL_CONNECTED;
 }
 
 bool Wifi::reconnect_if_necessary() {
-    if (!Wifi::hasConnection()) {
+    if (Wifi::hasConnection()) {
         return false;
     }
 

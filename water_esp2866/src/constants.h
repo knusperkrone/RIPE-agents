@@ -12,7 +12,7 @@ struct AgentConfig {
 
 // BACKEND SETTINGS
 //#define BACKEND_URL "http://192.168.1.57:8000"
-#define BACKEND_URL "http://retroapp.if-lab.de:8000"
+#define BACKEND_URL "http://retroapp.if-lab.de:8443"
 // BACKEND CONSTATNS
 #define BACKEND_SENSOR_PATH "/api/sensor"
 #define MQTT_DATA_PATH "sensor/data/"

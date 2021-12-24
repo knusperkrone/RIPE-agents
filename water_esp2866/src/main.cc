@@ -39,14 +39,19 @@ void server_config_callback(const char *ssid, const char *pwd) {
 void connect_mqtt() {
     std::tuple<const char *, int> brokerTuple = BackendAdapter::fetch_mqtt_broker();
     const char *broker = std::get<0>(brokerTuple);
-    int port = std::get<1>(brokerTuple);
-
-    Mqtt::setup(mqtt_callback, broker, port);
+    if (broker != NULL) {
+        int port = std::get<1>(brokerTuple);
+        Mqtt::setup(mqtt_callback, broker, port);
+    } else {
+        Serial.println("[CRITICAL] Invalid broker url");
+        isOnline = false;
+    }
 }
 
 void setup() {
     Serial.begin(9600);
     Sensor::setup_pins();
+    delay(1000);
 
     settings.setup();
     // Check if we have wifi connection
@@ -83,7 +88,7 @@ void check_settings_updated() {
 }
 
 void loop() {
-    isWifiSettingUpdated = Wifi::reconnect_if_necessary();
+    // isWifiSettingUpdated = Wifi::reconnect_if_necessary();
     check_settings_updated();
 
     if (isOnline) {

@@ -53,6 +53,8 @@ std::tuple<const char *, int> BackendAdapter::fetch_mqtt_broker() {
     } else {
         Serial.print("[ERROR] Http error: ");
         Serial.println(httpClient.errorToString(code));
+        httpClient.end();
+        return std::make_tuple(brokerField, -1);
     }
     httpClient.end();
 
