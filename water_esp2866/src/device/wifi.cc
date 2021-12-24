@@ -9,7 +9,6 @@ bool Wifi::connect(int tries) {
     }
 
     WiFi.begin(settings.get_wifi_ssid(), settings.get_wifi_pwd());
-    int tries = 20;  // 10 seconds
     while (!Wifi::hasConnection()) {
         delay(500);
         Serial.print(".");
