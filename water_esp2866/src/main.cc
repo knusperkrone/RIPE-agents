@@ -88,7 +88,6 @@ void check_settings_updated() {
 }
 
 void loop() {
-    // isWifiSettingUpdated = Wifi::reconnect_if_necessary();
     check_settings_updated();
 
     if (isOnline) {
