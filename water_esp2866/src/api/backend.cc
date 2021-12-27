@@ -21,7 +21,7 @@ bool BackendAdapter::setup(int tries) {
     return true;
 }
 
-std::tuple<const char *, int> BackendAdapter::fetch_mqtt_broker() {
+std::tuple<const char *, int> BackendAdapter::fetch_mqtt_broker(int tries) {
     const char *sensorId = settings.get_sensor_id_str();
     const char *sensorKey = settings.get_sensor_key();
 
@@ -53,10 +53,17 @@ std::tuple<const char *, int> BackendAdapter::fetch_mqtt_broker() {
     } else {
         Serial.print("[ERROR] Http error: ");
         Serial.println(httpClient.errorToString(code));
-        httpClient.end();
-        return std::make_tuple(brokerField, -1);
     }
     httpClient.end();
+
+    if (brokerField == NULL) {
+        if (tries <= 0) {
+            Serial.print("[ERROR] Retrying");
+            return fetch_mqtt_broker(tries - 1);
+        } else {
+            return std::make_tuple(brokerField, -1);
+        }
+    }
 
     // split tcp://BROKER_IP:BROKER_PORT
     Serial.print("[INFO] Broker ");

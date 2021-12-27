@@ -14,7 +14,7 @@
 class BackendAdapter {
    public:
     static bool setup(int tries = 3);
-    static std::tuple<const char *,int>fetch_mqtt_broker();
+    static std::tuple<const char *,int>fetch_mqtt_broker(int tries = 3);
     static void send_sensor_data();
 
    private:
