@@ -3,16 +3,17 @@
 void Sensor::setup_pins() {
     delay(100);
     pinMode(WATER_RELAY, OUTPUT);
+    set_water(false);
     delay(100);
 }
 
 void Sensor::set_water(int32_t on) {
     if (on) {
         Serial.println("[INFO] Water on");
-        digitalWrite(WATER_RELAY, HIGH);
+        digitalWrite(WATER_RELAY, LOW);
     } else {
         Serial.println("[INFO] Water off");
-        digitalWrite(WATER_RELAY, LOW);
+        digitalWrite(WATER_RELAY, HIGH);
     }
 }
 

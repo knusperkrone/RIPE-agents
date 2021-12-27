@@ -24,7 +24,7 @@ struct AgentConfig {
 // SENSOR CONFIG
 #define SEND_TIMEOUT_MS 30 * 1000
 #define SENSOR_NAME "REFERENCE_SENSOR"
-#define WATER_RELAY D8
+#define WATER_RELAY D7
 #define MOISTURE_SENSOR A0
 extern const AgentConfig AGENTS[1];
 
