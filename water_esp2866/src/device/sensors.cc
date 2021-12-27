@@ -8,13 +8,13 @@ void Sensor::setup_pins() {
 }
 
 void Sensor::set_water(int32_t on) {
+    delay(100);
     if (on) {
-        Serial.println("[INFO] Water on");
         digitalWrite(WATER_RELAY, LOW);
     } else {
-        Serial.println("[INFO] Water off");
         digitalWrite(WATER_RELAY, HIGH);
     }
+    delay(100);
 }
 
 int Sensor::read_moisture() {
