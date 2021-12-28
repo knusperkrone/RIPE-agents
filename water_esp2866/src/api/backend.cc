@@ -58,7 +58,7 @@ std::tuple<const char *, int> BackendAdapter::fetch_mqtt_broker(int tries) {
 
     if (brokerField == NULL) {
         if (tries <= 0) {
-            Serial.print("[ERROR] Retrying");
+            Serial.println("[ERROR] Retrying");
             return fetch_mqtt_broker(tries - 1);
         } else {
             return std::make_tuple(brokerField, -1);
