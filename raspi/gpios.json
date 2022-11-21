@@ -1,5 +1,8 @@
 {
   "water": 16,
   "light": 26,
-  "pwm": [19, 6]
+  "pwm": {
+    "write": 19,
+    "control": 6
+  }
 }

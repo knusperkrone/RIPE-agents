@@ -74,15 +74,15 @@ class Device(BaseDevice):
         time.sleep(0.1)
         GPIO.setmode(GPIO.BCM)
 
-        with open('gpios.json') as gpio_file:
+        with open('gpios.json', 'r') as gpio_file:
             gpios = json.load(gpio_file)
             water_gpio = gpios['water']
             light_gpio = gpios['light']
-            (pwm_wg, pwm_cp) = tuple(gpios['pwm'])
+            (pwm_w_gpio, pwm_c_pgio) = (gpios['pwm']['write'], gpios['pwm']['controll'])
 
         self.light_relay = RelayDevice(water_gpio)
         self.water_relay = RelayDevice(light_gpio)
-        self.pwm_device = PWMDevice(pwm_wg, pwm_cp)
+        self.pwm_device = PWMDevice(pwm_w_gpio, pwm_c_pgio)
 
     def register_backend(self) -> Tuple[int, str]:
         '''Actual backend calls to register the sensor and the specific agents (ordered alpabetically)'''
