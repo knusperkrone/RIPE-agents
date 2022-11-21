@@ -17,7 +17,7 @@ DATA_TOPIC = 'sensor/data'
 LOG_TOPIC = 'sensor/log'
 DISCONNECT_TOPIC = 'ripe/master'
 
-DEFAULT_URL = 'http://retroapp.if-lab.de:8000/api'
+DEFAULT_URL = 'http://ripe.knukro.com/api'
 
 
 class MqttContext:
