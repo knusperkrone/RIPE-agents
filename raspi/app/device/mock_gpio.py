@@ -1,12 +1,12 @@
 class DebugPWM:
     def __init__(self, gpio_write, hz):
-        print(f'PWM: {gpio_write} - {hz}')
+        print(f'\033[96mPWM: {gpio_write} - {hz}\033[0m')
 
     def start(self, param):
-        print(f'PWM start: {param}')
+        print(f'\033[96mPWM start: {param}\033[0m')
 
     def ChangeDutyCycle(self, speed):
-        print(f'PWM ChangedutyCycle: {speed}')
+        print(f'\033[96mPWM ChangedutyCycle: {speed}\033[0m')
 
 
 class GPIO:
@@ -20,23 +20,23 @@ class GPIO:
 
     @staticmethod
     def setmode(a):
-        print(f'setmode: {a}')
+        print(f'\033[96msetmode: {a}\033[0m')
 
     @staticmethod
     def setup(a, b):
-        print(f'setup: {a}, {b}')
+        print(f'\033[96msetup: {a}, {b}\033[0m')
 
     @staticmethod
     def output(a, b):
-        print(f'Output: {a}, {b}')
+        print(f'\033[96mOutput: {a}, {b}\033[0m')
 
     @staticmethod
     def cleanup():
-        print(f'cleanup')
+        print(f'\033[96mcleanup\033[0m')
 
     @staticmethod
     def setwarnings(flag):
-        print(f'setwarnings: {flag}')
+        print(f'\033[96msetwarnings: {flag}\033[0m')
 
     @staticmethod
     def PWM(gpio_write, param) -> DebugPWM:

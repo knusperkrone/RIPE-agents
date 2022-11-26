@@ -1,4 +1,3 @@
-import json
 import threading
 import time as t
 import traceback
@@ -9,16 +8,13 @@ import requests as r
 
 from .backend import BackendAdapter
 from .device.device import Device
-from .model import SensorData
+from .sensor_data import SensorData
 
 # Constants
 COMMAND_TOPIC = 'sensor/cmd'
 DATA_TOPIC = 'sensor/data'
 LOG_TOPIC = 'sensor/log'
 DISCONNECT_TOPIC = 'ripe/master'
-
-DEFAULT_URL = 'http://ripe.knukro.com/api'
-
 
 class MqttContext:
     def __init__(self, adapter: BackendAdapter, device: Device, sensor_id: int, sensor_key: str):
@@ -30,17 +26,16 @@ class MqttContext:
         self.client: mqtt.Client = None
 
     def connect(self):
-        print(f"[{datetime.utcnow().ctime()} UTC] Connecting .",
-              end='', flush=True)
+        self.log("Connecting to control server")
         broker: str = None
         while broker is None:
             # done in a while, as backend may be temporary unavailable
             try:
-                print('.', end='', flush=True)
                 broker = self.adapter.fetch_sensor_broker(self.id, self.key)
             except Exception as e:
                 t.sleep(0.5)
-        print(f"[{datetime.utcnow().ctime()} UTC] Assigned broker {broker}")
+
+        self.log(f"Control server assigned broker {broker}")
 
         if broker.startswith('tcp://'):
             broker = broker[len('tcp://')::]
@@ -52,18 +47,18 @@ class MqttContext:
         self.client = mqtt.Client()
 
         # listen mqtt-commands and register callbackss
-        is_connected = False
         self.client.on_connect = lambda _cli, _, __, ___: self._on_mqtt_connect()
         self.client.on_disconnect = lambda _cli, _, __: self._on_mqtt_disconnect()
         self.client.on_message = lambda _, __, msg: self._on_mqtt_message(msg)
 
         self.client.connect(uri, int(portStr), keepalive=10)
         self.client.loop_start()
+        self.log(f"Connected to {broker}")
 
         curr_client = self.client
         def timeout_fn():
             if not curr_client.is_connected():
-                print("Client is not connected - retrying")
+                self.log("Client is not connected - retrying")
                 self.connect()
         threading.Timer(10, timeout_fn).start()
 
@@ -73,8 +68,11 @@ class MqttContext:
         )
 
     def log(self, msg: str):
-        print(f'[{datetime.utcnow().ctime()} UTC] {msg}')
-        self.client.publish(f'{LOG_TOPIC}/{self.id}/{self.key}', payload=msg)
+        print(f'\033[92mMQTT [{datetime.utcnow().ctime()} UTC]\033[0m {msg}')
+        try:
+            self.client.publish(f'{LOG_TOPIC}/{self.id}/{self.key}', payload=msg)
+        except:
+            pass
 
     def _clear_callbacks(self):
         self.client.on_connect = None
@@ -109,12 +107,11 @@ class MqttContext:
                 self.device.on_agent_cmd(i, message.payload[i])
 
 
-def kickoff(base_url: str = DEFAULT_URL):
+def kickoff(base_url):
     adapter = BackendAdapter(base_url)
     device = Device(adapter)
 
     sensor_id, sensor_key = device.get_creds()
-    print(f"[Sensor {sensor_id} with {base_url}]")
 
     mqtt_context = MqttContext(adapter, device, sensor_id, sensor_key)
     mqtt_context.connect()

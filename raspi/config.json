@@ -1,0 +1,29 @@
+{
+    "auth": {
+        "id": null,
+        "key": null
+    },
+    "sensors": [{
+        "type": "miflora",
+        "mac": ""
+    }],
+    "agents": [{
+            "type": "relay",
+            "name": "water",
+            "gpio": 16
+        },
+        {
+            "type": "relay",
+            "name": "light",
+            "gpio": 26
+        },
+        {
+            "type": "pwm",
+            "name": "fan",
+            "gpio": {
+                "write": 19,
+                "control": 6
+            }
+        }
+    ]
+}

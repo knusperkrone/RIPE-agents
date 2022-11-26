@@ -4,16 +4,16 @@ Example for an "Xiaomi miflora sensor" with GPIO controlled Relay.
 '''
 
 import json
+import os
 import time as time
 from abc import ABC, abstractmethod
-from typing import Tuple
-
-from btlewrap.bluepy import BluepyBackend
-from miflora import miflora_poller
+from datetime import datetime
 
 from ..backend import BackendAdapter
-from ..model import SensorData
-from .relay import PWMDevice, RelayDevice
+from ..sensor_data import SensorData
+from .agents import Agent, create_agent_from_json
+from .sensor import Sensor, create_sensor_from_json
+from .math import argmin, average
 
 try:
     import RPi.GPIO as GPIO
@@ -21,108 +21,92 @@ except ModuleNotFoundError:
     '''Mock gpio calls on a non RPi machine'''
     from .mock_gpio import GPIO
 
-
-MIFLORA_MAC = 'C4:7C:8D:6B:C3:48'
+DEFAULT_CONFIG_PATH = 'config.json'
 
 
 class BaseDevice(ABC):
     def __init__(self, adapter: BackendAdapter):
         '''Eager init sensor credetials'''
         self.adapter = adapter
-        self.register_sensor()
+        self.sensors: list[Sensor] = []
+        self.agents: list[Agent] = []
+        self.id, self.key = self.read_auth_settings()
 
-    def register_sensor(self):
-        '''Uses persistet credentials, or registers a new sensor from the backend'''
-        config_path = 'config.json'
-        try:
-            with open(config_path, 'r') as config_file:
-                settings = json.load(config_file)
-                self.id = settings['id']
-                self.key = settings['key']
-        except Exception:
-            sensor_id, sensor_key = self.register_backend()
-            with open(config_path, 'w') as config_file:
-                json.dump({'id': sensor_id, 'key': sensor_key}, config_file)
-            self.id = sensor_id
-            self.key = sensor_key
+        self.log(f'Sensor with {self.id}:{self.key}')
 
-    def get_creds(self) -> Tuple[int, str]:
+        GPIO.setwarnings(False)
+        GPIO.cleanup()
+        time.sleep(0.1)
+        GPIO.setmode(GPIO.BCM)
+                
+    def get_config(self):
+        env_config = os.environ.get('CONFIG')
+        if env_config is not None:
+            return env_config
+        return DEFAULT_CONFIG_PATH
+
+    def get_creds(self) -> tuple[int, str]:
         return (self.id, self.key)
 
-    @abstractmethod
-    def register_backend(self):
-        raise Exception('register_backend not implemented')
+    def read_auth_settings(self) -> tuple[int, str]:
+        with open(self.get_config(), 'r') as config_file:
+            settings = json.load(config_file)['auth']
+            return (settings['id'], settings['key'])
+
+    def read_agent_settings(self) -> list:
+        with open(self.get_config(), 'r') as config_file:
+            return json.load(config_file)['agents']
+    
+    def read_sensor_settings(self) -> list:
+        with open(self.get_config(), 'r') as config_file:
+            return json.load(config_file)['sensors']
+
+    def log(self, msg: str):
+        print(f'\033[94mDevice [{datetime.utcnow().ctime()} UTC]\033[0m {msg}')
+        
 
     @abstractmethod
     def on_agent_cmd(self, agent_index: int, cmd: int):
-        raise Exception('on_agent_cmd not implemented')
+        raise NotImplementedError('on_agent_cmd not implemented')
 
     @abstractmethod
     def get_sensor_data(self) -> SensorData:
-        raise Exception('get_sensor_data not implemented')
-
+        raise NotImplementedError('get_sensor_data not implemented')
 
 class Device(BaseDevice):
     def __init__(self, adapter: BackendAdapter):
         '''Setups miflora sensor and GPIOs'''
         super().__init__(adapter)
-        # Init xiamio sensor
-        self.poller = miflora_poller.MiFloraPoller(MIFLORA_MAC, BluepyBackend)
+        
+        for json_file in self.read_sensor_settings():
+            sensor  = create_sensor_from_json(json_file)
+            self.log(f'Added sensor: {sensor}')
+            self.sensors.append(sensor)
+        for json_file in self.read_agent_settings():
+            agent = create_agent_from_json(json_file)
+            self.log(f'Added agent: {agent}')
+            self.agents.append(agent)
 
-        # Init GPIOs for relay control
-        GPIO.cleanup()
-        time.sleep(0.1)
-        GPIO.setmode(GPIO.BCM)
-
-        with open('gpios.json', 'r') as gpio_file:
-            gpios = json.load(gpio_file)
-            water_gpio = gpios['water']
-            light_gpio = gpios['light']
-            (pwm_w_gpio, pwm_c_pgio) = (gpios['pwm']['write'], gpios['pwm']['controll'])
-
-        self.light_relay = RelayDevice(water_gpio)
-        self.water_relay = RelayDevice(light_gpio)
-        self.pwm_device = PWMDevice(pwm_w_gpio, pwm_c_pgio)
-
-    def register_backend(self) -> Tuple[int, str]:
-        '''Actual backend calls to register the sensor and the specific agents (ordered alpabetically)'''
-        (sensor_id, sensor_key) = self.adapter.register_sensor()
-
-        # register device specific agents
-        self.adapter.register_agent(
-            sensor_id, sensor_key, "01_Licht", "TimeAgent")
-        self.adapter.register_agent(
-            sensor_id, sensor_key, "02_Wasser", "ThresholdAgent")
-        self.adapter.register_agent(
-            sensor_id, sensor_key, "03_PWM", "PercentAgent")
-
-        return (sensor_id, sensor_key)
-
-    def on_agent_cmd(self, agent_index: int, cmd: int):
+    def on_agent_cmd(self, index: int, cmd: int):
         '''Converts the recevived i64 into an actual command for the (alpabetically ordered) agent'''
-        state = (cmd == 1)
-        if agent_index == 0:
-            print(f"light: {state}")
-            self.light_relay.set_state(state)
-        elif agent_index == 1:
-            print(f"water: {state}")
-            self.water_relay.set_state(state)
-        elif agent_index == 2:
-            print(f"pwm: {cmd}")
-            self.pwm_device.set_speed(cmd)
+        self.agents[index].set_state(cmd)
 
     def get_sensor_data(self) -> SensorData:
-        '''Fetches fres, uncached data from the xiamo sensor'''
-        self.poller.clear_cache()
-        self.poller.fill_cache()
+        '''Fetches and cummulates the sensor data'''
+        data = []
+        for sensor in self.sensors:
+            sensor_data = sensor.get_sensor_data()
+            if data is not None:
+                data.append(sensor_data)
+
+        def nomalize(data, key):
+            values = list(map(lambda x: x.get(key), data))
+            return list(filter(lambda x: x is not None, values))
 
         return SensorData(
-            battery=self.poller.battery,
-            moisture=self.poller.parameter_value(
-                miflora_poller.MI_MOISTURE),
-            light=self.poller.parameter_value(miflora_poller.MI_LIGHT),
-            temperature=self.poller.parameter_value(
-                miflora_poller.MI_TEMPERATURE),
-            conductivity=self.poller.parameter_value(
-                miflora_poller.MI_CONDUCTIVITY)
+            battery=argmin(nomalize(data, 'battery')),
+            conductivity=average(nomalize(data, 'conductivity')),
+            light=average(nomalize(data, 'light')),
+            moisture=average(nomalize(data, 'moisture')),
+            temperature=average(nomalize(data, 'temperature')),
         )
