@@ -1,10 +1,9 @@
 import threading
 import time as t
-import traceback
 from datetime import datetime
+import os
 
 import paho.mqtt.client as mqtt
-import requests as r
 
 from .backend import BackendAdapter
 from .device.device import Device
@@ -15,6 +14,7 @@ COMMAND_TOPIC = 'sensor/cmd'
 DATA_TOPIC = 'sensor/data'
 LOG_TOPIC = 'sensor/log'
 DISCONNECT_TOPIC = 'ripe/master'
+
 
 class MqttContext:
     def __init__(self, adapter: BackendAdapter, device: Device, sensor_id: int, sensor_key: str):
@@ -56,6 +56,7 @@ class MqttContext:
         self.log(f"Connected to {broker}")
 
         curr_client = self.client
+
         def timeout_fn():
             if not curr_client.is_connected():
                 self.log("Client is not connected - retrying")
@@ -70,7 +71,8 @@ class MqttContext:
     def log(self, msg: str):
         print(f'\033[92mMQTT [{datetime.utcnow().ctime()} UTC]\033[0m {msg}')
         try:
-            self.client.publish(f'{LOG_TOPIC}/{self.id}/{self.key}', payload=msg)
+            self.client.publish(
+                f'{LOG_TOPIC}/{self.id}/{self.key}', payload=msg)
         except:
             pass
 
@@ -122,8 +124,18 @@ def kickoff(base_url):
             mqtt_context.publish(payload)
             mqtt_context.log("published sensordata")
         except Exception as e:
-            mqtt_context.log(f"Failed publishing {e.__class__}")
-            traceback.print_tb(e.__traceback__)
+            # Rollback logic
+            # traceback.print_tb(e.__traceback__)
+            rollback_cmd = os.environ.get('RIPE_LOOP_ROLLBACK_CMD')
+            if rollback_cmd is not None:
+                rollback_succeeded = os.system(rollback_cmd) == 0
+                mqtt_context.log(
+                    f"Failed publishing due {e.__class__}, rollback succeeded: {rollback_succeeded}")
+                if rollback_succeeded:
+                    t.sleep(10)
+                    continue
+            else:
+                mqtt_context.log(f"Failed publishing {e.__class__}")
 
         # timeout
         t.sleep(120)

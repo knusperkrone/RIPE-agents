@@ -7,6 +7,6 @@ RUN apk add make gcc libc-dev glib-dev && \
 WORKDIR /app
 COPY ripe.py ripe.py
 COPY app app
-COPY *.json .
+COPY *.json ./
 
 CMD ["python3", "-u" , "ripe.py"]
