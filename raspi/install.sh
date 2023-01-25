@@ -12,7 +12,7 @@ fi
 
 pip3 install -r requirements.txt
 
-cat <<EOT >> /lib/systemd/system/ripe.service
+cat <<EOT > /lib/systemd/system/ripe.service
 [Unit]
 Description=Ripe Service
 After=multi-user.target
@@ -24,3 +24,6 @@ ExecStart=$PWD/start_ripe.sh
 [Install]
 WantedBy=multi-user.target
 EOT
+
+systemctl start ripe.service
+systemctl enable ripe.service
