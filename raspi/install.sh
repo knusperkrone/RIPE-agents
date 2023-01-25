@@ -18,8 +18,9 @@ Description=Ripe Service
 After=multi-user.target
 
 [Service]
-Type=idle
+WorkingDirectory=$PWD
 ExecStart=$PWD/start_ripe.sh
+Restart=always
 
 [Install]
 WantedBy=multi-user.target
