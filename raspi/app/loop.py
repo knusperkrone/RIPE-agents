@@ -51,7 +51,9 @@ class MqttContext:
         self.client.on_disconnect = lambda _cli, _, __: self._on_mqtt_disconnect()
         self.client.on_message = lambda _, __, msg: self._on_mqtt_message(msg)
 
-        self.client.connect(uri, int(portStr), keepalive=10)
+        self.client.will_set(
+            f'{LOG_TOPIC}/{self.id}/{self.key}', "LOST_CONNECTION")
+        self.client.connect(uri, int(portStr), keepalive=10, )
         self.client.loop_start()
         self.log(f"Connected to {broker}")
 
