@@ -1,10 +1,13 @@
 FROM python:3-alpine3.12
 # https://github.com/alpinelinux/docker-alpine/issues/135
 
-RUN apk add make gcc libc-dev glib-dev && \
-    pip3 install paho-mqtt miflora bluepy btlewrap requests pyserial RPi.GPIO
+RUN apk add bluez make gcc libc-dev glib-dev
 
 WORKDIR /app
+
+COPY requirements.txt ./requirements.txt
+RUN pip3 install -r requirements.txt
+
 COPY ripe.py ripe.py
 COPY app app
 COPY *.json ./
