@@ -12,17 +12,22 @@ except ModuleNotFoundError:
 
 
 class Agent(ABC):
-    def __init__(self, name: str, type: str):
+    def __init__(self, name: str, type: str, failsafe):
         self.name = name
         self.type = type
+        self.failsaife = failsafe
 
     @abstractmethod
     def set_state(self, _cmd: int):
         raise NotImplementedError('set_state not implemented')
 
+    @abstractmethod
+    def failsaife(self):
+        raise NotImplementedError('set_state not implemented')
+
 class RelayAgent(Agent):
-    def __init__(self, name: str, type: str, gpio: int):
-        super().__init__(name, type)
+    def __init__(self, name: str, type: str, failsafe: bool, gpio: int):
+        super().__init__(name, type, failsafe)
         self.gpio = gpio
         GPIO.setup(self.gpio, GPIO.OUT)
         time.sleep(0.1)
@@ -36,6 +41,12 @@ class RelayAgent(Agent):
         self.active = False
         GPIO.output(self.gpio, GPIO.HIGH)
 
+    def failsaife(self):
+        if self.failsaife:
+            self.enable()
+        else:
+            self.disable()
+
     def set_state(self, cmd: int):
         if cmd == 1:
             self.enable()
@@ -46,8 +57,8 @@ class RelayAgent(Agent):
         return f'RelayAgent[{self.gpio}]'
 
 class PwmAgent(Agent):
-    def __init__(self, name: str, type: str, gpio_write: int, gpio_control: int):
-        super().__init__(name, type)
+    def __init__(self, name: str, type: str, failsafe: int, gpio_write: int, gpio_control: int):
+        super().__init__(name, type, failsafe)
         self.gpio_write = gpio_write
         self.gpio_control = gpio_control
 
@@ -55,6 +66,9 @@ class PwmAgent(Agent):
         self.pwm = GPIO.PWM(self.gpio_write, 23)
         self.pwm.start(0)
         self.pwm_speed = 0
+
+    def failsaife(self):
+        self.set_state(self.failsaife)
 
     def set_state(self, speed: int):
         self.pwm_speed = speed
@@ -69,12 +83,14 @@ def create_agent_from_json(json) -> Agent:
         return RelayAgent(
             json['name'],
             type,
-            json['gpio']
+            json['failsafe'],
+            json['gpio'],
         )
     elif type == 'pwm':
         return PwmAgent(
             json['name'],
             type,
+            json['failsafe'],
             json['gpio']['write'],
             json['gpio']['control'],
         )

@@ -86,6 +86,11 @@ class Device(BaseDevice):
             agent = create_agent_from_json(json_file)
             self.log(f'Added agent: {agent}')
             self.agents.append(agent)
+    
+    def failsaife(self):
+        '''Turn off all agents'''
+        for agent in self.agents:
+            agent.failsaife()
 
     def on_agent_cmd(self, index: int, cmd: int):
         '''Converts the recevived i64 into an actual command for the (alpabetically ordered) agent'''

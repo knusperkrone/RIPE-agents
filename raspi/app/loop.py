@@ -96,6 +96,7 @@ class MqttContext:
 
     def _on_mqtt_disconnect(self):
         self.log(f"Mqtt disconnected - reconnecting")
+        self.device.failsaife()
         self.connect()
 
     def _on_mqtt_message(self,  message: mqtt.MQTTMessage):
@@ -113,6 +114,12 @@ def kickoff(base_url):
     adapter = BackendAdapter(base_url)
     device = Device(adapter)
 
+    rollback_cmd = os.environ.get('RIPE_LOOP_ROLLBACK_CMD')
+    if rollback_cmd:
+        device.log(f'Rollback cmd {rollback_cmd}')
+    else:
+        device.log('No rollback cmd')
+
     sensor_id, sensor_key = device.get_creds()
 
     mqtt_context = MqttContext(adapter, device, sensor_id, sensor_key)
@@ -125,8 +132,6 @@ def kickoff(base_url):
             mqtt_context.log("published sensordata")
         except Exception as e:
             # Rollback logic
-            # traceback.print_tb(e.__traceback__)
-            rollback_cmd = os.environ.get('RIPE_LOOP_ROLLBACK_CMD')
             if rollback_cmd is not None:
                 rollback_succeeded = os.system(rollback_cmd) == 0
                 mqtt_context.log(
