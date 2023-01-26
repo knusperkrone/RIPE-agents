@@ -3,3 +3,4 @@ miflora
 bluepy
 btlewrap
 requests
+RPi.GPIO

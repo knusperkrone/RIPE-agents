@@ -10,6 +10,7 @@ if [ ! -f "start_ripe.sh" ]; then
     exit 1
 fi
 
+set -o errexit
 pip3 install -r requirements.txt
 
 cat <<EOT > /lib/systemd/system/ripe.service

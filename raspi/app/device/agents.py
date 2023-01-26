@@ -4,11 +4,7 @@ Extend GPIO.HIGH and GPIO.LOW with some bool logic semantics with OOP
 import time
 from abc import ABC, abstractmethod
 
-
-try:
-    import RPi.GPIO as GPIO
-except ModuleNotFoundError:
-    from .mock_gpio import GPIO
+from . import GPIO
 
 
 class Agent(ABC):
@@ -24,6 +20,7 @@ class Agent(ABC):
     @abstractmethod
     def failsaife(self):
         raise NotImplementedError('set_state not implemented')
+
 
 class RelayAgent(Agent):
     def __init__(self, name: str, type: str, failsafe: bool, gpio: int):
@@ -56,6 +53,7 @@ class RelayAgent(Agent):
     def __str__(self) -> str:
         return f'RelayAgent[{self.gpio}]'
 
+
 class PwmAgent(Agent):
     def __init__(self, name: str, type: str, failsafe: int, gpio_write: int, gpio_control: int):
         super().__init__(name, type, failsafe)
@@ -76,6 +74,7 @@ class PwmAgent(Agent):
 
     def __str__(self) -> str:
         return f'PwmAgent[{self.gpio_write}:{self.gpio_control}]'
+
 
 def create_agent_from_json(json) -> Agent:
     type = json['type']

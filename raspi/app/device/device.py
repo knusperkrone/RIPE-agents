@@ -15,11 +15,7 @@ from .agents import Agent, create_agent_from_json
 from .sensor import Sensor, create_sensor_from_json
 from .math import argmin, average
 
-try:
-    import RPi.GPIO as GPIO
-except ModuleNotFoundError:
-    '''Mock gpio calls on a non RPi machine'''
-    from .mock_gpio import GPIO
+from . import GPIO
 
 DEFAULT_CONFIG_PATH = 'config.json'
 
@@ -33,12 +29,7 @@ class BaseDevice(ABC):
         self.id, self.key = self.read_auth_settings()
 
         self.log(f'Sensor with {self.id}:{self.key}')
-
-        GPIO.setwarnings(False)
-        GPIO.cleanup()
-        time.sleep(0.1)
-        GPIO.setmode(GPIO.BCM)
-                
+        
     def get_config(self):
         env_config = os.environ.get('CONFIG')
         if env_config is not None:
@@ -56,14 +47,13 @@ class BaseDevice(ABC):
     def read_agent_settings(self) -> list:
         with open(self.get_config(), 'r') as config_file:
             return json.load(config_file)['agents']
-    
+
     def read_sensor_settings(self) -> list:
         with open(self.get_config(), 'r') as config_file:
             return json.load(config_file)['sensors']
 
     def log(self, msg: str):
         print(f'\033[94mDevice [{datetime.utcnow().ctime()} UTC]\033[0m {msg}')
-        
 
     @abstractmethod
     def on_agent_cmd(self, agent_index: int, cmd: int):
@@ -73,20 +63,21 @@ class BaseDevice(ABC):
     def get_sensor_data(self) -> SensorData:
         raise NotImplementedError('get_sensor_data not implemented')
 
+
 class Device(BaseDevice):
     def __init__(self, adapter: BackendAdapter):
         '''Setups miflora sensor and GPIOs'''
         super().__init__(adapter)
-        
+
         for json_file in self.read_sensor_settings():
-            sensor  = create_sensor_from_json(json_file)
+            sensor = create_sensor_from_json(json_file)
             self.log(f'Added sensor: {sensor}')
             self.sensors.append(sensor)
         for json_file in self.read_agent_settings():
             agent = create_agent_from_json(json_file)
             self.log(f'Added agent: {agent}')
             self.agents.append(agent)
-    
+
     def failsaife(self):
         '''Turn off all agents'''
         for agent in self.agents:
