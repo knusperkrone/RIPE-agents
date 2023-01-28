@@ -24,6 +24,7 @@ class MqttContext:
         self.id = sensor_id
         self.key = sensor_key
         self.client: mqtt.Client = None
+        self.timer: threading.Timer
 
     def connect(self):
         self.log("Connecting to control server")
@@ -33,7 +34,7 @@ class MqttContext:
             try:
                 broker = self.adapter.fetch_sensor_broker(self.id, self.key)
             except Exception as e:
-                t.sleep(0.5)
+                t.sleep(1)
 
         self.log(f"Control server assigned broker {broker}")
 
@@ -62,8 +63,13 @@ class MqttContext:
         def timeout_fn():
             if not curr_client.is_connected():
                 self.log("Client is not connected - retrying")
+                self.watchdog.cancel()
                 self.connect()
-        threading.Timer(10, timeout_fn).start()
+                self.watchdog = threading.Timer(10, timeout_fn)
+                self.watchdog.start()
+
+        self.watchdog = threading.Timer(10, timeout_fn)
+        self.watchdog.start()
 
     def publish(self, data: SensorData):
         self.client.publish(
@@ -106,6 +112,7 @@ class MqttContext:
         self.log(f"CMD: {topic} {message.payload}")
         if topic == DISCONNECT_TOPIC:
             self.log("Broker master disconnected - reconnecting on new broker")
+            self.device.failsaife()
             self.connect()
         else:
             for i in range(len(message.payload)):
