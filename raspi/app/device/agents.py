@@ -11,7 +11,7 @@ class Agent(ABC):
     def __init__(self, name: str, type: str, failsafe):
         self.name = name
         self.type = type
-        self.failsaife = failsafe
+        self.failsaife_state = failsafe
 
     @abstractmethod
     def set_state(self, _cmd: int):
@@ -39,10 +39,11 @@ class RelayAgent(Agent):
         GPIO.output(self.gpio, GPIO.HIGH)
 
     def failsaife(self):
-        if self.failsaife:
+        if self.failsaife_state:
             self.enable()
         else:
             self.disable()
+        print(f'\033[91m{self} failsafe state is: {self.failsaife_state}\033[0m')
 
     def set_state(self, cmd: int):
         if cmd == 1:
@@ -66,7 +67,8 @@ class PwmAgent(Agent):
         self.pwm_speed = 0
 
     def failsaife(self):
-        self.set_state(self.failsaife)
+        self.set_state(self.failsaife_state)
+        print(f'\033[91m{self} failsafe state is: f{self.failsaife_state}\033[0m')
 
     def set_state(self, speed: int):
         self.pwm_speed = speed
