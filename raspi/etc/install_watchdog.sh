@@ -29,5 +29,6 @@ EnvironmentFile=$PWD/.env
 WantedBy=multi-user.target
 EOT
 
+chown $USER:$USER -R ..
 systemctl start ripe.service
 systemctl enable ripe.service

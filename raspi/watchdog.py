@@ -34,7 +34,6 @@ def hot_reload_if_necessary():
         return
 
     # update ripe
-    subprocess.run(['git', 'config', '--add', 'safe.directory', '.'])
     subprocess.run(['git', 'config', 'pull.rebase', 'false'])
     subprocess.run(['git', 'config', 'user.email' 'RIPE-watchdog@example.com'])
     subprocess.run(['git', 'config', 'user.name' 'Ripe Watchdog'])
