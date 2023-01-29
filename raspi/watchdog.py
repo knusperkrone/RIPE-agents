@@ -29,13 +29,24 @@ def hot_reload_if_necessary():
     }).text
 
     if local_sha == remote_sha:
-        print(f'Ripe is up to date: {local_sha}')
+        print(f'[Watchdog] Ripe is up to date: {local_sha}')
         return
 
     # update ripe
-    subprocess.run(['git', 'pull', 'origin', 'main'])
-    subprocess.run(['pip3', 'install', '-r', 'requirements.txt'])
+    subprocess.run(['git', 'config', 'pull.rebase', 'false'])
+    subprocess.run(['git', 'config', 'user.email' 'RIPE-watchdog@example.com'])
+    subprocess.run(['git', 'config', 'user.name' 'Ripe Watchdog'])
+    status = subprocess.run(['git', 'pull', 'origin', 'main'])
+    if status.returncode != 0:
+        raise OSError('Failed pulling master')
+    status = subprocess.run(['pip3', 'install', '-r', 'requirements.txt'])
+    if status.returncode != 0:
+        raise OSError('Failed installing dependencies')
 
+    updated_sha = subprocess.check_output(
+        ['git', 'rev-parse', 'HEAD']).decode('utf-8').strip()
+
+    print(f'[Watchdog] Restarting ripe with: {updated_sha}')
     if APP is not None:
         APP.kill()
     APP = run_app()
@@ -48,7 +59,7 @@ APP = run_app()
 while True:
     time.sleep(1)
     if APP.poll() is not None:
-        print('Ripe terminated restarting..')
+        print('[Watchdog] Ripe terminated restarting..')
         APP = run_app()
 
     if LAST_UPDATE is None or (datetime.now() - LAST_UPDATE) >= timedelta(hours=6):
@@ -56,4 +67,4 @@ while True:
             hot_reload_if_necessary()
             LAST_UPDATE = datetime.now()
         except Exception as e:
-            print(f'Failed to hot reload application {e}')
+            print(f'[Watchdog] Failed to hot reload application {e}')
