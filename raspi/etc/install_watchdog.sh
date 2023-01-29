@@ -4,13 +4,14 @@ if [ "$EUID" -ne 0 ]
   exit
 fi
 
-if [ ! -f "start_ripe.sh" ]; then
+if [ ! -f "watchdog.py" ]; then
     echo "You have to execute this command from the base folder"
     echo "Aborting."
     exit 1
 fi
 
 set -o errexit
+apt install git
 pip3 install -r requirements.txt
 
 cat <<EOT > /lib/systemd/system/ripe.service
@@ -19,9 +20,10 @@ Description=Ripe Service
 After=multi-user.target
 
 [Service]
-WorkingDirectory=$PWD
-ExecStart=$PWD/start_ripe.sh
 Restart=always
+WorkingDirectory=$PWD
+ExecStart=python3 -u ./watchdog.py
+EnvironmentFile=$PWD/.env
 
 [Install]
 WantedBy=multi-user.target
