@@ -1,67 +1,10 @@
-'''
-Example for an "Xiaomi miflora sensor" with GPIO controlled Relay.
-"TimerAgent" is for lighting and "TresholdAgent" for watering.
-'''
+from app.util.math import argmin, average
+from app.util.log import logger
+from app.backend import BackendAdapter, SensorData
 
-import json
-import os
-import time as time
-from abc import ABC, abstractmethod
-from datetime import datetime
-
-from ..backend import BackendAdapter
-from ..sensor_data import SensorData
-from .agents import Agent, create_agent_from_json
-from .sensor import Sensor, create_sensor_from_json
-from .math import argmin, average
-
-from . import GPIO
-
-DEFAULT_CONFIG_PATH = 'config.json'
-
-
-class BaseDevice(ABC):
-    def __init__(self, adapter: BackendAdapter):
-        '''Eager init sensor credetials'''
-        self.adapter = adapter
-        self.sensors: list[Sensor] = []
-        self.agents: list[Agent] = []
-        self.id, self.key = self.read_auth_settings()
-
-        self.log(f'Sensor with {self.id}:{self.key}')
-        
-    def get_config(self):
-        env_config = os.environ.get('CONFIG')
-        if env_config is not None:
-            return env_config
-        return DEFAULT_CONFIG_PATH
-
-    def get_creds(self) -> tuple[int, str]:
-        return (self.id, self.key)
-
-    def read_auth_settings(self) -> tuple[int, str]:
-        with open(self.get_config(), 'r') as config_file:
-            settings = json.load(config_file)['auth']
-            return (settings['id'], settings['key'])
-
-    def read_agent_settings(self) -> list:
-        with open(self.get_config(), 'r') as config_file:
-            return json.load(config_file)['agents']
-
-    def read_sensor_settings(self) -> list:
-        with open(self.get_config(), 'r') as config_file:
-            return json.load(config_file)['sensors']
-
-    def log(self, msg: str):
-        print(f'\033[94mDevice [{datetime.utcnow().ctime()} UTC]\033[0m {msg}')
-
-    @abstractmethod
-    def on_agent_cmd(self, agent_index: int, cmd: int):
-        raise NotImplementedError('on_agent_cmd not implemented')
-
-    @abstractmethod
-    def get_sensor_data(self) -> SensorData:
-        raise NotImplementedError('get_sensor_data not implemented')
+from .base import BaseDevice
+from .agent import create_agent_from_json
+from .sensor import create_sensor_from_json
 
 
 class Device(BaseDevice):
@@ -71,12 +14,12 @@ class Device(BaseDevice):
 
         for json_file in self.read_sensor_settings():
             sensor = create_sensor_from_json(json_file)
-            self.log(f'Added sensor: {sensor}')
             self.sensors.append(sensor)
+            logger.info(f'Added sensor: {sensor}')
         for json_file in self.read_agent_settings():
             agent = create_agent_from_json(json_file)
-            self.log(f'Added agent: {agent}')
             self.agents.append(agent)
+            logger.info(f'Added agent: {agent}')
 
     def failsaife(self):
         '''Turn off all agents'''

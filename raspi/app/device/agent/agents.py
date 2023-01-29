@@ -1,25 +1,9 @@
-'''
-Extend GPIO.HIGH and GPIO.LOW with some bool logic semantics with OOP
-'''
 import time
-from abc import ABC, abstractmethod
 
-from . import GPIO
+from app.util.log import logger
 
-
-class Agent(ABC):
-    def __init__(self, name: str, type: str, failsafe):
-        self.name = name
-        self.type = type
-        self.failsaife_state = failsafe
-
-    @abstractmethod
-    def set_state(self, _cmd: int):
-        raise NotImplementedError('set_state not implemented')
-
-    @abstractmethod
-    def failsaife(self):
-        raise NotImplementedError('set_state not implemented')
+from .gpio import GPIO
+from .base import Agent
 
 
 class RelayAgent(Agent):
@@ -43,7 +27,7 @@ class RelayAgent(Agent):
             self.enable()
         else:
             self.disable()
-        print(f'\033[91m{self} failsafe state is: {self.failsaife_state}\033[0m')
+        logger.warn(f'{self} failsafe state is: {self.failsaife_state}')
 
     def set_state(self, cmd: int):
         if cmd == 1:
@@ -68,7 +52,7 @@ class PwmAgent(Agent):
 
     def failsaife(self):
         self.set_state(self.failsaife_state)
-        print(f'\033[91m{self} failsafe state is: f{self.failsaife_state}\033[0m')
+        logger.warn(f'{self} failsafe state is: {self.failsaife_state}')
 
     def set_state(self, speed: int):
         self.pwm_speed = speed

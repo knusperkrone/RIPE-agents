@@ -2,7 +2,7 @@ import os
 
 from app import loop
 
-DEFAULT_URL = 'http://ripe.knukro.com/api'
+DEFAULT_URL = 'https://ripe.knukro.com/api'
 
 if __name__ == '__main__':
     base_url = os.environ.get('BASE_URL')
