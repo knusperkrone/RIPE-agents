@@ -33,8 +33,8 @@ def hot_reload_if_necessary():
         return
 
     # update ripe
-    subprocess.run('git', 'pull')
-    subprocess.run('pip3', '-r', 'requirements.txt')
+    subprocess.run(['git', 'pull', 'origin', 'main'])
+    subprocess.run(['pip3', 'install', '-r', 'requirements.txt'])
 
     if APP is not None:
         APP.kill()
