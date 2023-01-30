@@ -23,7 +23,7 @@ class Device(BaseDevice):
 
     def failsaife(self):
         '''Turn off all agents'''
-        self.log('Setting device in Failsafe state')
+        logger.warn('Setting device in Failsafe state')
         for agent in self.agents:
             agent.failsaife()
 
