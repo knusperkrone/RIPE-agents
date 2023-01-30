@@ -22,9 +22,16 @@ class MqttContext:
         self.id: Final[int] = sensor_id
         self.key: Final[str] = sensor_key
         self.client: Final[mqtt.Client] = mqtt.Client()
+        self.is_connecting = False
 
     def connect(self, tries=10):
-        self.log("Connecting to control server")
+        if self.is_connecting:
+            logger.warn('Device is already connecting')
+            return
+
+        self.is_connecting = True
+        logger.info("Connecting to control server")
+
         broker: str = None
         while broker is None:
             try:
@@ -57,19 +64,22 @@ class MqttContext:
         self.client.connect(uri, int(portStr), keepalive=10, )
         self.client.loop_start()
         self.log(f"Connected to {broker}")
+        self.is_connecting = False
 
     def publish(self, data: SensorData):
-        self.client.publish(
-            f'{DATA_TOPIC}/{self.id}/{self.key}', payload=data.json()
-        )
+        self._publish(f'{DATA_TOPIC}/{self.id}/{self.key}', data.json())
 
     def log(self, msg: str):
         logger.info(msg)
+        self._publish(f'{LOG_TOPIC}/{self.id}/{self.key}', msg)
+
+    def _publish(self, topic, payload):
         try:
-            self.client.publish(
-                f'{LOG_TOPIC}/{self.id}/{self.key}', payload=msg)
-        except:
-            pass
+            if not self.client.is_connected():
+                self.connect()
+            self.client.publish(topic, payload=payload)
+        except Exception as e:
+            logger.error(f'Failed to publish to MQTT: {e}')
 
     def _clear_callbacks(self):
         self.client.on_connect = None
