@@ -2,7 +2,7 @@ import subprocess
 import time
 import atexit
 import requests as re
-import signal 
+import signal
 
 from typing import Optional
 from datetime import datetime, timedelta
@@ -54,7 +54,7 @@ def hot_reload_if_necessary():
 
 
 atexit.register(cleanup)
-signal.signal(signal.SIGUSR1, hot_reload_if_necessary)
+signal.signal(signal.SIGUSR1, lambda x, y: hot_reload_if_necessary)
 
 APP = run_app()
 while True:
