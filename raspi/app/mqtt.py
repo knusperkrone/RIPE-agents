@@ -63,8 +63,8 @@ class MqttContext:
             f'{LOG_TOPIC}/{self.id}/{self.key}', 'LOST_CONNECTION')
         self.client.connect(uri, int(portStr), keepalive=10, )
         self.client.loop_start()
-        self.log(f"Connected to {broker}")
         self.is_connecting = False
+        self.log(f"Connecting to {broker}")
 
     def publish(self, data: SensorData):
         self._publish(f'{DATA_TOPIC}/{self.id}/{self.key}', data.json())
@@ -96,7 +96,7 @@ class MqttContext:
         self.client.subscribe(f'{DISCONNECT_TOPIC}')
         self.client.subscribe(f'{COMMAND_TOPIC}/{self.id}/{self.key}')
 
-        self.log(f"Mqtt connected")
+        self.log(f"Mqtt connection etablished")
 
     def _on_mqtt_disconnect(self):
         self.log(f"Mqtt disconnected - reconnecting")
