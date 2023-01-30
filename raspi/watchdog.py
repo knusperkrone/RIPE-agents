@@ -54,7 +54,7 @@ def hot_reload_if_necessary():
 
 
 atexit.register(cleanup)
-signal.signal(signal.SIGUSR1, lambda x, y: hot_reload_if_necessary)
+signal.signal(signal.SIGUSR1, lambda x, y: hot_reload_if_necessary())
 
 APP = run_app()
 while True:
