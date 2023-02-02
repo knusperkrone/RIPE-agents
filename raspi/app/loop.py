@@ -25,6 +25,9 @@ def kickoff(base_url):
     while True:
         try:
             payload = device.get_sensor_data()
+            
+            if not mqtt_context.is_connected():
+                mqtt_context.connect()
             mqtt_context.publish(payload)
             mqtt_context.log("published sensordata")
         except Exception as e:
