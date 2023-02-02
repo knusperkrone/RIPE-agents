@@ -75,8 +75,6 @@ class MqttContext:
 
     def _publish(self, topic, payload):
         try:
-            if not self.client.is_connected():
-                self.connect()
             self.client.publish(topic, payload=payload)
         except Exception as e:
             logger.error(f'Failed to publish to MQTT: {e}')
