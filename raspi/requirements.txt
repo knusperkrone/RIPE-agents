@@ -4,3 +4,4 @@ bluepy
 btlewrap
 requests
 RPi.GPIO
+rpi-rf

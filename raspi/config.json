@@ -1,32 +1,39 @@
 {
-    "auth": {
-        "id": null,
-        "key": null
+  "auth": {
+    "id": 1,
+    "key": "K9N0C0"
+  },
+  "sensors": [
+    {
+      "type": "miflora",
+      "mac": null
+    }
+  ],
+  "agents": [
+    {
+      "type": "relay",
+      "name": "water",
+      "failsafe": false,
+      "gpio": 16
     },
-    "sensors": [{
-        "type": "miflora",
-        "mac": null
-    }],
-    "agents": [{
-            "type": "relay",
-            "name": "water",
-            "failsafe": false,
-            "gpio": 16
-        },
-        {
-            "type": "relay",
-            "name": "light",
-            "failsafe": false,
-            "gpio": 26
-        },
-        {
-            "type": "pwm",
-            "name": "fan",
-            "failsafe": 50,
-            "gpio": {
-                "write": 19,
-                "control": 6
-            }
-        }
-    ]
+    {
+      "type": "rfd",
+      "name": "light",
+      "failsafe": false,
+      "gpio": 17,
+      "code": {
+        "on": 13842568,
+        "off": 13842564
+      }
+    },
+    {
+      "type": "pwm",
+      "name": "fan",
+      "failsafe": 50,
+      "gpio": {
+        "write": 19,
+        "control": 6
+      }
+    }
+  ]
 }
