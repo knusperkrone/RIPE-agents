@@ -83,7 +83,7 @@ class RfdAgent(Agent):
         if self.failsaife_state:
             self.set_state(1)
         else:
-            self.disable(0)
+            self.set_state(0)
         logger.warn(f"{self} failsafe state is: {self.failsaife_state}")
 
     def set_state(self, cmd: int):
