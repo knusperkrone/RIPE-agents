@@ -1,5 +1,5 @@
 import time as t
-import sys
+import os
 import paho.mqtt.client as mqtt
 from typing import Final
 
@@ -8,14 +8,16 @@ from .backend import BackendAdapter, SensorData
 from .device import Device
 
 # Constants
-COMMAND_TOPIC = 'sensor/cmd'
-DATA_TOPIC = 'sensor/data'
-LOG_TOPIC = 'sensor/log'
-DISCONNECT_TOPIC = 'ripe/master'
+COMMAND_TOPIC = "sensor/cmd"
+DATA_TOPIC = "sensor/data"
+LOG_TOPIC = "sensor/log"
+DISCONNECT_TOPIC = "ripe/master"
 
 
 class MqttContext:
-    def __init__(self, adapter: BackendAdapter, device: Device, sensor_id: int, sensor_key: str):
+    def __init__(
+        self, adapter: BackendAdapter, device: Device, sensor_id: int, sensor_key: str
+    ):
         super().__init__()
         self.adapter: Final[BackendAdapter] = adapter
         self.device: Final[Device] = device
@@ -26,7 +28,7 @@ class MqttContext:
 
     def connect(self, tries=10):
         if self.is_connecting:
-            logger.warn('Device is already connecting')
+            logger.warn("Device is already connecting")
             return
 
         self.is_connecting = True
@@ -37,18 +39,18 @@ class MqttContext:
             try:
                 broker = self.adapter.fetch_sensor_broker(self.id, self.key)
             except Exception as e:
-                logger.error(f'Failed to connect to broker: {e}')
+                logger.error(f"Failed to connect to broker: {e}")
                 tries -= 1
                 if tries < 0:
-                    logger.critical('Failed to reconnect, aborting')
-                    sys.exit(-1)
+                    logger.critical("Failed to reconnect, exiting programm")
+                    os._exit(8)
                 t.sleep(1)
 
         self.log(f"Control server assigned broker {broker}")
 
-        if broker.startswith('tcp://'):
-            broker = broker[len('tcp://')::]
-        (uri, portStr) = broker.split(':')
+        if broker.startswith("tcp://"):
+            broker = broker[len("tcp://") : :]
+        (uri, portStr) = broker.split(":")
 
         if self.client is not None:
             self._clear_callbacks()
@@ -59,9 +61,11 @@ class MqttContext:
         self.client.on_disconnect = lambda _cli, _, __: self._on_mqtt_disconnect()
         self.client.on_message = lambda _, __, msg: self._on_mqtt_message(msg)
 
-        self.client.will_set(
-            f'{LOG_TOPIC}/{self.id}/{self.key}', 'LOST_CONNECTION')
-        self.client.connect(uri, int(portStr), keepalive=10, )
+        self.client.connect(
+            uri,
+            int(portStr),
+            keepalive=10,
+        )
         self.client.loop_start()
         logger.info(f"Connecting to {broker}")
         self.is_connecting = False
@@ -70,17 +74,17 @@ class MqttContext:
         return self.client.is_connected()
 
     def publish(self, data: SensorData):
-        self._publish(f'{DATA_TOPIC}/{self.id}/{self.key}', data.json())
+        self._publish(f"{DATA_TOPIC}/{self.id}/{self.key}", data.json())
 
     def log(self, msg: str):
         logger.info(msg)
-        self._publish(f'{LOG_TOPIC}/{self.id}/{self.key}', msg)
+        self._publish(f"{LOG_TOPIC}/{self.id}/{self.key}", msg)
 
     def _publish(self, topic, payload):
         try:
             self.client.publish(topic, payload=payload)
         except Exception as e:
-            logger.error(f'Failed to publish to MQTT: {e}')
+            logger.error(f"Failed to publish to MQTT: {e}")
 
     def _clear_callbacks(self):
         self.client.on_connect = None
@@ -90,12 +94,12 @@ class MqttContext:
     def _on_mqtt_connect(self):
         # Notfy master about self disconnect
         self.client.will_set(
-            f'{LOG_TOPIC}/{self.id}/{self.key}',
-            payload='Lost connection'
+            f"{LOG_TOPIC}/{self.id}/{self.key}", payload="Lost connection"
         )
         # Get notified about master disconnect
-        self.client.subscribe(f'{DISCONNECT_TOPIC}')
-        self.client.subscribe(f'{COMMAND_TOPIC}/{self.id}/{self.key}')
+        self.client.subscribe(f"{DISCONNECT_TOPIC}")
+        # Receive commands
+        self.client.subscribe(f"{COMMAND_TOPIC}/{self.id}/{self.key}")
 
         self.log(f"Mqtt connection etablished")
 
@@ -105,7 +109,7 @@ class MqttContext:
         self.is_connecting = False
         self.connect()
 
-    def _on_mqtt_message(self,  message: mqtt.MQTTMessage):
+    def _on_mqtt_message(self, message: mqtt.MQTTMessage):
         topic: str = message.topic
         self.log(f"CMD: {topic} {message.payload}")
         if topic == DISCONNECT_TOPIC:
