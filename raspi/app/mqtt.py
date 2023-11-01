@@ -23,7 +23,7 @@ class MqttContext:
         self.device: Final[Device] = device
         self.id: Final[int] = sensor_id
         self.key: Final[str] = sensor_key
-        self.client: Final[mqtt.Client] = mqtt.Client()
+        self.client: Final[mqtt.Client] = mqtt.Client(transport="websockets")
         self.is_connecting = False
 
     def connect(self, tries=10):
@@ -49,8 +49,16 @@ class MqttContext:
         self.log(f"Control server assigned broker {broker}")
 
         if broker.startswith("tcp://"):
+            self.client = mqtt.Client()
             broker = broker[len("tcp://") : :]
-        (uri, portStr) = broker.split(":")
+            (uri, portStr) = broker.split(":")
+        elif broker.startswith("wss://"):
+            self.client = mqtt.Client(transport="websockets")
+            self.client.tls_set()
+            broker = broker[len("wss://") : :]
+            (uri, portStr) = broker.split(":")
+        
+            
 
         if self.client is not None:
             self._clear_callbacks()
@@ -61,6 +69,7 @@ class MqttContext:
         self.client.on_disconnect = lambda _cli, _, __: self._on_mqtt_disconnect()
         self.client.on_message = lambda _, __, msg: self._on_mqtt_message(msg)
 
+        print(uri, portStr)
         self.client.connect(
             uri,
             int(portStr),

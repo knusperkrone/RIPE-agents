@@ -23,7 +23,7 @@ class BackendAdapter:
                    headers={'X-KEY': sensor_key}, timeout=1000)
 
         try:
-            broker = r.json()['broker']['tcp']
+            broker = r.json()['broker']['wss']
             if broker is None:
                 raise RuntimeError(f'No broker returned in {r.text}')
             return broker
