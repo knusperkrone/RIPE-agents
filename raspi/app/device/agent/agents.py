@@ -68,6 +68,7 @@ class PwmAgent(Agent):
 
 
 class RfdAgent(Agent):
+    tries = 3
     devices: dict[int, RFDevice] = {}
 
     def __init__(
@@ -93,8 +94,10 @@ class RfdAgent(Agent):
             self._send(self.off)
 
     def _send(self, code: int):
-        self.device.tx_code(code)
-        logger.debug(f"{self} send {code}")
+        for i in range(RfdAgent.tries):
+            self.device.tx_code(code)
+            time.sleep(0.25)
+            logger.debug(f"{self} send {code}")
 
     def _init_device(self, gpio: int) -> RFDevice:
         if gpio not in RfdAgent.devices:
