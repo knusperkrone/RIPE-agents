@@ -69,7 +69,6 @@ class MqttContext:
         self.client.on_disconnect = lambda _cli, _, __: self._on_mqtt_disconnect()
         self.client.on_message = lambda _, __, msg: self._on_mqtt_message(msg)
 
-        print(uri, portStr)
         self.client.connect(
             uri,
             int(portStr),
