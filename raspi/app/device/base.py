@@ -10,6 +10,7 @@ from abc import ABC, abstractmethod
 from typing import Final
 
 from app.util.log import logger
+from app.util.config import CONFIG
 from app.backend import BackendAdapter, SensorData
 from .agent import Agent
 from .sensor import Sensor
@@ -28,10 +29,7 @@ class BaseDevice(ABC):
         logger.info(f'Starting Device[{self.id}:{self.key}]')
 
     def get_config(self):
-        env_config = os.environ.get('CONFIG')
-        if env_config is not None:
-            return env_config
-        return DEFAULT_CONFIG_PATH
+        return CONFIG.device_config_path
 
     def get_creds(self) -> tuple[int, str]:
         return (self.id, self.key)

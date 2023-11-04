@@ -2,16 +2,18 @@ import os
 import time as t
 
 from .util.log import logger
+from .util.config import CONFIG
 from .backend import BackendAdapter
 from .device import Device
 from .mqtt import MqttContext
 
 
-def kickoff(base_url):
+def kickoff():
+    base_url = CONFIG.base_url
     adapter = BackendAdapter(base_url)
     device = Device(adapter)
 
-    rollback_cmd = os.environ.get('RIPE_LOOP_ROLLBACK_CMD')
+    rollback_cmd = CONFIG.rollback_cmd
     if rollback_cmd:
         logger.info(f'Rollback cmd: {rollback_cmd}')
     else:
