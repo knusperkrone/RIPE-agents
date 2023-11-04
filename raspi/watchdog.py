@@ -18,7 +18,8 @@ def run_app():
 def cleanup():
     global APP
     if APP is not None:
-        APP.kill()
+        APP.terminate()
+        APP = None
 
 
 def hot_reload_if_necessary():
@@ -48,8 +49,8 @@ def hot_reload_if_necessary():
         ['git', 'rev-parse', 'HEAD']).decode('utf-8').strip()
 
     print(f'[Watchdog] Restarting ripe with: {updated_sha}')
-    if APP is not None:
-        APP.kill()
+    
+    cleanup()
     APP = run_app()
 
 
