@@ -72,7 +72,7 @@ class MqttContext:
         self.client.connect(
             uri,
             int(portStr),
-            keepalive=10,
+            keepalive=30,
         )
         self.client.loop_start()
         logger.info(f"Connecting to {broker}")
