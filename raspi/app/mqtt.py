@@ -90,7 +90,7 @@ class MqttContext:
 
     def _publish(self, topic, payload):
         try:
-            self.client.publish(topic, payload=payload)
+            self.client.publish(topic, payload=payload, qos=2)
         except Exception as e:
             logger.error(f"Failed to publish to MQTT: {e}")
 
@@ -105,9 +105,9 @@ class MqttContext:
             f"{LOG_TOPIC}/{self.id}/{self.key}", payload="Lost connection"
         )
         # Get notified about master disconnect
-        self.client.subscribe(f"{DISCONNECT_TOPIC}")
+        self.client.subscribe(f"{DISCONNECT_TOPIC}", qos=2)
         # Receive commands
-        self.client.subscribe(f"{COMMAND_TOPIC}/{self.id}/{self.key}")
+        self.client.subscribe(f"{COMMAND_TOPIC}/{self.id}/{self.key}", qos=2)
 
         self.log(f"Mqtt connection etablished")
 
