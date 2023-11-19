@@ -1,4 +1,5 @@
 import os
+import subprocess
 import time as t
 
 from .util.log import logger
@@ -8,7 +9,19 @@ from .device import Device
 from .mqtt import MqttContext
 
 
+def get_git_hash():
+    try:
+        return (
+            subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
+            .decode("ascii")
+            .strip()
+        )
+    except:
+        return "0000000"
+
+
 def kickoff():
+    version = get_git_hash()
     base_url = CONFIG.base_url
     adapter = BackendAdapter(base_url)
     device = Device(adapter)
@@ -21,7 +34,7 @@ def kickoff():
 
     sensor_id, sensor_key = device.get_creds()
 
-    mqtt_context = MqttContext(adapter, device, sensor_id, sensor_key)
+    mqtt_context = MqttContext(adapter, device, sensor_id, sensor_key, version)
     mqtt_context.connect()
 
     while True:

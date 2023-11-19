@@ -16,15 +16,22 @@ DISCONNECT_TOPIC = "ripe/master"
 
 class MqttContext:
     def __init__(
-        self, adapter: BackendAdapter, device: Device, sensor_id: int, sensor_key: str
+        self,
+        adapter: BackendAdapter,
+        device: Device,
+        sensor_id: int,
+        sensor_key: str,
+        version: str,
     ):
         super().__init__()
         self.adapter: Final[BackendAdapter] = adapter
         self.device: Final[Device] = device
         self.id: Final[int] = sensor_id
         self.key: Final[str] = sensor_key
+        self.version: Final[str] = version
         self.client: Optional[mqtt.Client] = None
         self.is_connecting = False
+        self.pepper = int(t.time())
 
     def connect(self, tries=10):
         if self.is_connecting:
@@ -53,20 +60,31 @@ class MqttContext:
 
             self.log(f"Control server assigned broker {broker}")
 
-            client_id = f"sensor-{self.id}-{self.key}-{int(t.time())}"
+            client_id = f"sensor-{self.version}-{self.id}-{self.pepper}"
             if broker.startswith("tcp://"):
-                self.client = mqtt.Client(client_id=client_id, reconnect_on_failure=False)
+                self.client = mqtt.Client(
+                    client_id=client_id,
+                    reconnect_on_failure=False,
+                    protocol=mqtt.MQTTv5,
+                )
                 broker = broker[len("tcp://") : :]
                 (uri, portStr) = broker.split(":")
             elif broker.startswith("wss://"):
-                self.client = mqtt.Client(transport="websockets", client_id=client_id, reconnect_on_failure=False)
+                self.client = mqtt.Client(
+                    transport="websockets",
+                    client_id=client_id,
+                    reconnect_on_failure=False,
+                    protocol=mqtt.MQTTv5,
+                )
                 self.client.tls_set()
                 broker = broker[len("wss://") : :]
                 (uri, portStr) = broker.split(":")
             else:
                 raise Exception(f"Unknown broker protocol: {broker}")
 
-            self.client.on_connect = lambda _cli, _, __, ___: self._on_mqtt_connect()
+            self.client.on_connect = (
+                lambda _cli, _, __, ___, ____,: self._on_mqtt_connect()
+            )
             self.client.on_disconnect = lambda _cli, _, __: self._on_mqtt_disconnect()
             self.client.on_message = lambda _, __, msg: self._on_mqtt_message(msg)
             self.client.connect(
@@ -78,6 +96,9 @@ class MqttContext:
             logger.info(f"Connected to {broker}")
         except Exception as e:
             logger.error(f"Failed to connect to broker: {e}")
+            t.sleep(1.0)
+            self.is_connecting = False
+            self.connect(tries - 1)
         finally:
             self.is_connecting = False
 
@@ -100,7 +121,7 @@ class MqttContext:
     def _on_mqtt_connect(self):
         # Notfy master about self disconnect
         self.client.will_set(
-            f"{LOG_TOPIC}/{self.id}/{self.key}", payload="Lost connection"
+            f"{LOG_TOPIC}/{self.id}/{self.key}", payload="Lost connection", qos=2
         )
         # Get notified about master disconnect
         self.client.subscribe(f"{DISCONNECT_TOPIC}", qos=2)
