@@ -83,10 +83,15 @@ class MqttContext:
                 raise Exception(f"Unknown broker protocol: {broker}")
 
             self.client.on_connect = (
-                lambda _cli, _, __, ___, ____,: self._on_mqtt_connect()
+                lambda _cli, _userdata, _rc, ___, ____,: self._on_mqtt_connect()
             )
-            self.client.on_disconnect = lambda _cli, _, __: self._on_mqtt_disconnect()
+            self.client.on_disconnect = (
+                lambda _cli, _userdata, _rc, _props: self._on_mqtt_disconnect()
+            )
             self.client.on_message = lambda _, __, msg: self._on_mqtt_message(msg)
+            self.client.will_set(
+                f"{LOG_TOPIC}/{self.id}/{self.key}", payload="Lost connection", qos=2
+            )
             self.client.connect(
                 uri,
                 int(portStr),
@@ -119,10 +124,6 @@ class MqttContext:
             logger.error(f"Failed to publish to MQTT: {e}")
 
     def _on_mqtt_connect(self):
-        # Notfy master about self disconnect
-        self.client.will_set(
-            f"{LOG_TOPIC}/{self.id}/{self.key}", payload="Lost connection", qos=2
-        )
         # Get notified about master disconnect
         self.client.subscribe(f"{DISCONNECT_TOPIC}", qos=2)
         # Receive commands
