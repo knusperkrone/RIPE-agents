@@ -28,21 +28,21 @@ def kickoff():
 
     rollback_cmd = CONFIG.rollback_cmd
     if rollback_cmd:
-        logger.info(f'Rollback cmd: {rollback_cmd}')
+        logger.info(f"Rollback cmd: {rollback_cmd}")
     else:
-        logger.info(f'No rollback cmd')
+        logger.info(f"No rollback cmd")
 
     sensor_id, sensor_key = device.get_creds()
 
     mqtt_context = MqttContext(adapter, device, sensor_id, sensor_key, version)
-    mqtt_context.connect()
+    mqtt_context.connect_or_die()
 
     while True:
         try:
             payload = device.get_sensor_data()
-            
+
             if not mqtt_context.is_connected():
-                mqtt_context.connect()
+                mqtt_context.connect_or_die()
             mqtt_context.publish(payload)
             mqtt_context.log("published sensordata")
         except Exception as e:
@@ -50,7 +50,8 @@ def kickoff():
             if rollback_cmd is not None:
                 rollback_succeeded = os.system(rollback_cmd) == 0
                 mqtt_context.log(
-                    f"Failed publishing due {e.__class__}, rollback succeeded: {rollback_succeeded}")
+                    f"Failed publishing due {e.__class__}, rollback succeeded: {rollback_succeeded}"
+                )
                 if rollback_succeeded:
                     t.sleep(10)
                     continue
