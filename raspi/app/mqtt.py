@@ -70,7 +70,7 @@ class MqttContext:
             if self.client is None:
                 raise Exception("No broker could be contacted")
             self.client.loop_start()
-            logger.info(f"Connected to {broker}")
+            self.log(f"Connected to {broker}")
 
         except Exception as e:
             logger.error(f"Connect failed, {tries} tries left: {e}")
