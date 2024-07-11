@@ -17,14 +17,12 @@ class MiFloraSensor(Sensor):
 
         return SensorData(
             battery=self.poller.battery,
-            moisture=self.poller.parameter_value(
-                miflora_poller.MI_MOISTURE),
+            moisture=self.poller.parameter_value(miflora_poller.MI_MOISTURE),
             light=self.poller.parameter_value(miflora_poller.MI_LIGHT),
-            temperature=self.poller.parameter_value(
-                miflora_poller.MI_TEMPERATURE),
-            conductivity=self.poller.parameter_value(
-                miflora_poller.MI_CONDUCTIVITY)
+            temperature=self.poller.parameter_value(miflora_poller.MI_TEMPERATURE),
+            conductivity=self.poller.parameter_value(miflora_poller.MI_CONDUCTIVITY),
+            humidity=None,
         )
 
     def __str__(self) -> str:
-        return f'MiFloraSensor[{self.mac}]'
+        return f"MiFloraSensor[{self.mac}]"

@@ -1,5 +1,6 @@
 paho-mqtt
 miflora
+lywsd03mmc
 bluepy
 btlewrap
 requests

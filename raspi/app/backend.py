@@ -12,6 +12,7 @@ class SensorData:
         light: int,
         temperature: float,
         conductivity: int,
+        humidity: float,
     ):
         super().__init__()
         self.battery: Final[int] = battery
@@ -19,6 +20,7 @@ class SensorData:
         self.light: Final[int] = light
         self.temperature: Final[float] = temperature
         self.conductivity: Final[int] = conductivity
+        self.humidity: Final[float] = humidity
 
     def json(self) -> str:
         return json.dumps(
@@ -28,6 +30,7 @@ class SensorData:
                 "light": int(self.light),
                 "temperature": float(self.temperature),
                 "conductivity": int(self.conductivity),
+                "humidity": float(self.humidity),
             }
         )
 
