@@ -47,6 +47,7 @@ def kickoff():
             mqtt_context.log("published sensordata")
         except Exception as e:
             # Rollback logic
+            print(e)
             if rollback_cmd is not None:
                 rollback_succeeded = os.system(rollback_cmd) == 0
                 mqtt_context.log(
@@ -56,7 +57,6 @@ def kickoff():
                     t.sleep(10)
                     continue
             else:
-                print(e)
                 mqtt_context.log(f"Failed publishing {e.__class__}")
 
         # timeout
