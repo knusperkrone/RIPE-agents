@@ -12,21 +12,25 @@ class MiFloraSensor(Sensor):
         self.poller = miflora_poller.MiFloraPoller(mac, BluepyBackend)
 
     def get_sensor_data(self) -> SensorData:
-        self.poller.clear_cache()
-        self.poller.fill_cache()
+        try:
+            self.poller.clear_cache()
+            self.poller.fill_cache()
 
-        return SensorData(
-            battery=int(self.poller.battery),
-            moisture=float(self.poller.parameter_value(miflora_poller.MI_MOISTURE)),
-            light=int(self.poller.parameter_value(miflora_poller.MI_LIGHT)),
-            temperature=float(
-                self.poller.parameter_value(miflora_poller.MI_TEMPERATURE)
-            ),
-            conductivity=int(
-                self.poller.parameter_value(miflora_poller.MI_CONDUCTIVITY)
-            ),
-            humidity=None,
-        )
+            return SensorData(
+                battery=int(self.poller.battery),
+                moisture=float(self.poller.parameter_value(miflora_poller.MI_MOISTURE)),
+                light=int(self.poller.parameter_value(miflora_poller.MI_LIGHT)),
+                temperature=float(
+                    self.poller.parameter_value(miflora_poller.MI_TEMPERATURE)
+                ),
+                conductivity=int(
+                    self.poller.parameter_value(miflora_poller.MI_CONDUCTIVITY)
+                ),
+                humidity=None,
+            )
+        except Exception as e:
+            print(f"Failed to get sensor data: {e}")
+            return None
 
     def __str__(self) -> str:
         return f"MiFloraSensor[{self.mac}]"
