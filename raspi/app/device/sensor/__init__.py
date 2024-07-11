@@ -8,6 +8,6 @@ def create_sensor_from_json(json) -> Sensor:
     if type == "miflora":
         return MiFloraSensor(json["mac"])
     elif type == "lywsd03mmc":
-        return Sensor()
+        return Lywsd03mmcSensor()
     else:
         raise NotImplementedError(f"Invalid agent-type: {type}")
