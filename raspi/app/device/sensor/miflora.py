@@ -16,11 +16,15 @@ class MiFloraSensor(Sensor):
         self.poller.fill_cache()
 
         return SensorData(
-            battery=self.poller.battery,
-            moisture=self.poller.parameter_value(miflora_poller.MI_MOISTURE),
-            light=self.poller.parameter_value(miflora_poller.MI_LIGHT),
-            temperature=self.poller.parameter_value(miflora_poller.MI_TEMPERATURE),
-            conductivity=self.poller.parameter_value(miflora_poller.MI_CONDUCTIVITY),
+            battery=int(self.poller.battery),
+            moisture=float(self.poller.parameter_value(miflora_poller.MI_MOISTURE)),
+            light=int(self.poller.parameter_value(miflora_poller.MI_LIGHT)),
+            temperature=float(
+                self.poller.parameter_value(miflora_poller.MI_TEMPERATURE)
+            ),
+            conductivity=int(
+                self.poller.parameter_value(miflora_poller.MI_CONDUCTIVITY)
+            ),
             humidity=None,
         )
 

@@ -7,30 +7,30 @@ import requests as re
 class SensorData:
     def __init__(
         self,
-        battery: int,
-        moisture: float,
-        light: int,
-        temperature: float,
-        conductivity: int,
-        humidity: float,
+        battery: Optional[int] = None,
+        moisture: Optional[float] = None,
+        light: Optional[int] = None,
+        temperature: Optional[float] = None,
+        conductivity: Optional[int] = None,
+        humidity: Optional[float] = None,
     ):
         super().__init__()
-        self.battery: Final[int] = battery
-        self.moisture: Final[float] = moisture
-        self.light: Final[int] = light
-        self.temperature: Final[float] = temperature
-        self.conductivity: Final[int] = conductivity
-        self.humidity: Final[float] = humidity
+        self.battery: Final[Optional[int]] = battery
+        self.moisture: Final[Optional[float]] = moisture
+        self.light: Final[Optional[int]] = light
+        self.temperature: Final[Optional[float]] = temperature
+        self.conductivity: Final[Optional[int]] = conductivity
+        self.humidity: Final[Optional[float]] = humidity
 
     def json(self) -> str:
         return json.dumps(
             {
-                "battery": int(self.battery),
-                "moisture": float(self.moisture),
-                "light": int(self.light),
-                "temperature": float(self.temperature),
-                "conductivity": int(self.conductivity),
-                "humidity": float(self.humidity),
+                "battery": self.battery,
+                "moisture": self.moisture,
+                "light": self.light,
+                "temperature": self.temperature,
+                "conductivity": self.conductivity,
+                "humidity": self.humidity,
             }
         )
 
