@@ -9,30 +9,30 @@ from .sensor import create_sensor_from_json
 
 class Device(BaseDevice):
     def __init__(self, adapter: BackendAdapter):
-        '''Setups miflora sensor and GPIOs'''
+        """Setups miflora sensor and GPIOs"""
         super().__init__(adapter)
 
         for json_file in self.read_sensor_settings():
             sensor = create_sensor_from_json(json_file)
             self.sensors.append(sensor)
-            logger.info(f'Added sensor: {sensor}')
+            logger.info(f"Added sensor: {sensor}")
         for json_file in self.read_agent_settings():
             agent = create_agent_from_json(json_file)
             self.agents.append(agent)
-            logger.info(f'Added agent: {agent}')
+            logger.info(f"Added agent: {agent}")
 
     def failsaife(self):
-        '''Turn off all agents'''
-        logger.warn('Setting device in Failsafe state')
+        """Turn off all agents"""
+        logger.warn("Setting device in Failsafe state")
         for agent in self.agents:
             agent.failsaife()
 
     def on_agent_cmd(self, index: int, cmd: int):
-        '''Converts the recevived i64 into an actual command for the (alpabetically ordered) agent'''
+        """Converts the recevived i64 into an actual command for the (alpabetically ordered) agent"""
         self.agents[index].set_state(cmd)
 
     def get_sensor_data(self) -> SensorData:
-        '''Fetches and cummulates the sensor data'''
+        """Fetches and cummulates the sensor data"""
         data = []
         for sensor in self.sensors:
             sensor_data = sensor.get_sensor_data()
@@ -40,14 +40,15 @@ class Device(BaseDevice):
                 data.append(sensor_data)
 
         def nomalize(data, key):
-            values = list(map(lambda x: x.get(key), data))
+            filtered_data = filter(lambda x: x is not None, data)
+            values = map(lambda x: x.get(key), filtered_data)
             return list(filter(lambda x: x is not None, values))
 
         return SensorData(
-            battery=argmin(nomalize(data, 'battery')),
-            conductivity=average(nomalize(data, 'conductivity')),
-            light=average(nomalize(data, 'light')),
-            moisture=average(nomalize(data, 'moisture')),
-            temperature=average(nomalize(data, 'temperature')),
-            humidity=average(nomalize(data, 'humidity')),
+            battery=argmin(nomalize(data, "battery")),
+            conductivity=average(nomalize(data, "conductivity")),
+            light=average(nomalize(data, "light")),
+            moisture=average(nomalize(data, "moisture")),
+            temperature=average(nomalize(data, "temperature")),
+            humidity=average(nomalize(data, "humidity")),
         )
