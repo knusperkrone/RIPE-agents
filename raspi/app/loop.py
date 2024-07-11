@@ -56,6 +56,7 @@ def kickoff():
                     t.sleep(10)
                     continue
             else:
+                print(e)
                 mqtt_context.log(f"Failed publishing {e.__class__}")
 
         # timeout
