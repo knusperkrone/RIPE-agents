@@ -60,6 +60,10 @@ def hot_reload_if_necessary():
 atexit.register(cleanup)
 signal.signal(signal.SIGUSR1, lambda x, y: hot_reload_if_necessary())
 
+status = subprocess.run(["pip3", "install", "-r", "requirements.txt"])
+if status.returncode != 0:
+    raise OSError("Failed installing dependencies")
+
 APP = run_app()
 while True:
     time.sleep(1)
