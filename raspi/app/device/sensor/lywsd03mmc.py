@@ -190,7 +190,7 @@ class Lywsd03mmcSensor(Sensor):
             if not self._client.is_connected():
                 await self._client.connect()
 
-            data: Lywsd03mmcData = self._client.data  # implicit connect
+            data: Lywsd03mmcData = await self._client.get_data()
             self._last_data = data
 
             return self._transform_data(data)
