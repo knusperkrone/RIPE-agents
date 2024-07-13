@@ -44,7 +44,9 @@ class MqttContext:
                         broker.host,
                         broker.port,
                         transport=broker.scheme,
-                        client_id=client_id,
+                        identifier=client_id,
+                        username=broker.credentials.username,
+                        password=broker.credentials.password,
                     )
                     async with client:
                         break
@@ -61,14 +63,16 @@ class MqttContext:
             try:
                 async with client:
                     self.client = client
-                    client.subscribe(f"{DISCONNECT_TOPIC}", qos=2)
-                    client.subscribe(f"{COMMAND_TOPIC}/{self.id}/{self.key}", qos=2)
+                    await client.subscribe(f"{DISCONNECT_TOPIC}", qos=2)
+                    await client.subscribe(
+                        f"{COMMAND_TOPIC}/{self.id}/{self.key}", qos=2
+                    )
 
                     async for message in client.messages:
                         try:
-                            self._on_mqtt_message(message)
+                            await self._on_mqtt_message(message)
                         except Exception as e:
-                            self.log(f"Failed to process message: {e}")
+                            await self.log(f"Failed to process message: {e}")
             except Exception as e:
                 self.client = None
                 self.device.failsaife()
@@ -77,12 +81,12 @@ class MqttContext:
     def is_connected(self) -> bool:
         return self.client is not None
 
-    def publish(self, data: SensorData):
-        self._publish(f"{DATA_TOPIC}/{self.id}/{self.key}", data.json())
+    async def publish(self, data: SensorData):
+        await self._publish(f"{DATA_TOPIC}/{self.id}/{self.key}", data.json())
 
-    def log(self, msg: str):
+    async def log(self, msg: str):
         logger.info(f"[MQTT_LOG] {msg}")
-        self._publish(f"{LOG_TOPIC}/{self.id}/{self.key}", msg)
+        await self._publish(f"{LOG_TOPIC}/{self.id}/{self.key}", msg)
 
     async def _get_brokers_from_master_or_die(self, tries=10) -> list[Broker]:
         while tries >= 0:
@@ -98,20 +102,20 @@ class MqttContext:
         logger.critical("Failed to retrieve - exiting")
         os._exit(8)
 
-    def _publish(self, topic, payload):
+    async def _publish(self, topic, payload):
         try:
-            self.client.publish(topic, payload=payload, qos=2)
+            await self.client.publish(topic, payload=payload, qos=2)
         except Exception as e:
             logger.warn(f"Failed to publish to MQTT: {e}")
 
-    def _on_mqtt_message(self, message: aiomqtt.Message):
+    async def _on_mqtt_message(self, message: aiomqtt.Message):
         topic = cast(str, message.topic)
         payload = cast(bytearray, message.payload)
-        self.log(f"CMD: {topic} {payload}")
+        await self.log(f"CMD: {topic} {payload}")
         if topic == DISCONNECT_TOPIC:
-            self.log("Master disconnected - reconnecting on new broker")
+            await self.log("Master disconnected - reconnecting on new broker")
             self.device.failsaife()
-            self.kickoff()
+            # TODO: Reconnect
         else:
             for i in range(len(cast(bytes, payload))):
                 self.device.on_agent_cmd(i, payload[i])

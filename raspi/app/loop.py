@@ -43,8 +43,8 @@ async def kickoff():
             async with asyncio.timeout(120):
                 payload = await device.get_sensor_data()
 
-            mqtt_context.publish(payload)
-            mqtt_context.log("published sensordata")
+            await mqtt_context.publish(payload)
+            await mqtt_context.log("published sensordata")
         except asyncio.TimeoutError:
             mqtt_context.log(f"Bluetooth timeout, retrying in 120 seconds")
         except Exception as e:
@@ -52,14 +52,14 @@ async def kickoff():
             print(e)
             if rollback_cmd is not None:
                 rollback_succeeded = os.system(rollback_cmd) == 0
-                mqtt_context.log(
+                await mqtt_context.log(
                     f"Failed publishing due {e.__class__}, rollback succeeded: {rollback_succeeded}"
                 )
                 if rollback_succeeded:
                     t.sleep(10)
                     continue
             else:
-                mqtt_context.log(f"Failed publishing {e.__class__}")
+                await mqtt_context.log(f"Failed publishing {e.__class__}")
 
         # timeout
         t.sleep(120)
