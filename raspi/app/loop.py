@@ -40,8 +40,7 @@ async def kickoff():
 
     while True:
         try:
-            async with asyncio.timeout(120):
-                payload = await device.get_sensor_data()
+            payload = await asyncio.wait_for(device.get_sensor_data(), timeout=90.0)
 
             await mqtt_context.publish(payload)
             await mqtt_context.log("published sensordata")
