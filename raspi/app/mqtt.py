@@ -40,6 +40,7 @@ class MqttContext:
             brokers = await self._get_brokers_from_master_or_die()
             for broker in brokers:
                 try:
+                    logger.info(f"Connecting to {broker.host}")
                     client = aiomqtt.Client(
                         broker.host,
                         broker.port,
