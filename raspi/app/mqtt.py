@@ -31,8 +31,13 @@ class MqttContext:
         self.key: Final[str] = sensor_key
         self.version: Final[str] = version
         self.client: Optional[aiomqtt.Client] = None
+        self.task: Optional[asyncio.Task] = None
 
-    async def kickoff(self, tries=10):
+    def kickoff(self, tries=10):
+        self.task = asyncio.create_task(self._do_kickoff())
+        logger.info("Kicked off mqtt")
+
+    async def _do_kickoff(self):
         client_id = f"sensor-{self.version}-{self.id}-{int(t.time())}"
 
         while True:
@@ -91,6 +96,7 @@ class MqttContext:
 
     async def _get_brokers_from_master_or_die(self, tries=10) -> list[Broker]:
         while tries >= 0:
+            logger.info("Fetching brokers from master")
             try:
                 return await self.adapter.fetch_sensor_brokers(self.id, self.key)
             except Exception as e:
@@ -116,7 +122,9 @@ class MqttContext:
         if topic == DISCONNECT_TOPIC:
             await self.log("Master disconnected - reconnecting on new broker")
             self.device.failsaife()
-            # TODO: Reconnect
+            # Reconnect
+            self.task.cancel()
+            self.kickoff()
         else:
             for i in range(len(cast(bytes, payload))):
                 self.device.on_agent_cmd(i, payload[i])

@@ -36,7 +36,11 @@ async def kickoff():
     sensor_id, sensor_key = device.get_creds()
 
     mqtt_context = MqttContext(adapter, device, sensor_id, sensor_key, version)
-    asyncio.create_task(mqtt_context.kickoff())
+    mqtt_context.kickoff()
+
+    while not mqtt_context.is_connected():
+        logger.info("Waiting for mqtt connection")
+        await asyncio.sleep(1)
 
     while True:
         try:
