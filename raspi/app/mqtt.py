@@ -125,6 +125,7 @@ class MqttContext:
             await self.log("Master disconnected - reconnecting on new broker")
             self.device.failsaife()
             # Reconnect
+            assert self.task is not None
             self.task.cancel()
             self.kickoff()
         else:
