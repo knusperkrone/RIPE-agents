@@ -44,10 +44,11 @@ async def kickoff():
 
     while True:
         try:
-            payload = await asyncio.wait_for(device.get_sensor_data(), timeout=90.0)
+            if mqtt_context.is_connected():
+                payload = await asyncio.wait_for(device.get_sensor_data(), timeout=90.0)
 
-            await mqtt_context.publish(payload)
-            await mqtt_context.log("published sensordata")
+                await mqtt_context.publish(payload)
+                await mqtt_context.log("published sensordata")
         except asyncio.TimeoutError:
             mqtt_context.log(f"Bluetooth timeout, retrying in 120 seconds")
         except Exception as e:

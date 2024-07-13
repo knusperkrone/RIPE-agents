@@ -80,6 +80,7 @@ class MqttContext:
                         except Exception as e:
                             await self.log(f"Failed to process message: {e}")
             except Exception as e:
+                logger.error(f"Lost connection to broker: {e}")
                 self.client = None
                 self.device.failsaife()
                 asyncio.sleep(2.0)
