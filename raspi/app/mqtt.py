@@ -81,6 +81,7 @@ class MqttContext:
             self.is_connecting = False
 
     def is_connected(self) -> bool:
+        assert self.client is not None
         return self.client.is_connected()
 
     def publish(self, data: SensorData):

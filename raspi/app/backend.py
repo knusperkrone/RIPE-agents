@@ -1,7 +1,7 @@
 import json
 from dataclasses import dataclass
 from typing import Optional, Tuple, Final
-import requests as re
+import requests as re # type: ignore
 
 
 class SensorData:

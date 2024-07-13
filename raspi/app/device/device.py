@@ -1,6 +1,9 @@
+from typing import cast, Union, Optional
+
 from app.util.math import argmin, average
 from app.util.log import logger
 from app.backend import BackendAdapter, SensorData
+
 
 from .base import BaseDevice
 from .agent import create_agent_from_json
@@ -28,27 +31,30 @@ class Device(BaseDevice):
             agent.failsaife()
 
     def on_agent_cmd(self, index: int, cmd: int):
-        """Converts the recevived i64 into an actual command for the (alpabetically ordered) agent"""
+        """Converts the received i64 into an actual command for the (alphabetically ordered) agent"""
         self.agents[index].set_state(cmd)
 
     def get_sensor_data(self) -> SensorData:
-        """Fetches and cummulates the sensor data"""
-        data = []
+        """Fetches and cumulates the sensor data"""
+        data_list: list[SensorData] = []
         for sensor in self.sensors:
             sensor_data = sensor.get_sensor_data()
-            if data is not None:
-                data.append(sensor_data)
+            if sensor_data is not None:
+                data_list.append(sensor_data)
 
-        def nomalize(data, key):
-            filtered_data = filter(lambda x: x is not None, data)
-            values = map(lambda x: x.get(key), filtered_data)
+        def normalize(data_list: list[SensorData], key: str) -> list[Union[int, float]]:
+            values = map(lambda x: x.get(key), data_list)
             return list(filter(lambda x: x is not None, values))
 
         return SensorData(
-            battery=argmin(nomalize(data, "battery")),
-            conductivity=average(nomalize(data, "conductivity")),
-            light=average(nomalize(data, "light")),
-            moisture=average(nomalize(data, "moisture")),
-            temperature=average(nomalize(data, "temperature")),
-            humidity=average(nomalize(data, "humidity")),
+            battery=cast(Optional[int], argmin(normalize(data_list, "battery"))),
+            conductivity=cast(
+                Optional[int], average(normalize(data_list, "conductivity"))
+            ),
+            light=cast(Optional[int], average(normalize(data_list, "light"))),
+            moisture=cast(Optional[float], average(normalize(data_list, "moisture"))),
+            temperature=cast(
+                Optional[float], average(normalize(data_list, "temperature"))
+            ),
+            humidity=cast(Optional[float], average(normalize(data_list, "humidity"))),
         )

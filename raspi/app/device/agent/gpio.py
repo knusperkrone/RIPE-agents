@@ -55,9 +55,6 @@ class MockRFDevice:
     def enable_tx(self):
         logger.debug(f"enable_tx on gpio {self.gpio}")
 
-    def enable_tx(self):
-        logger.debug(f"enable_tx on gpio {self.gpio}")
-
     def tx_code(self, code):
         logger.debug(f"tx_code {code} on gpio {self.gpio}")
 

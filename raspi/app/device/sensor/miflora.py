@@ -1,5 +1,6 @@
 from btlewrap.bluepy import BluepyBackend
 from miflora import miflora_poller
+from typing import Optional
 
 from app.backend import SensorData
 from .base import Sensor
@@ -11,7 +12,7 @@ class MiFloraSensor(Sensor):
         self.mac = mac
         self.poller = miflora_poller.MiFloraPoller(mac, BluepyBackend)
 
-    def get_sensor_data(self) -> SensorData:
+    def get_sensor_data(self) -> Optional[SensorData]:
         try:
             self.poller.clear_cache()
             self.poller.fill_cache()

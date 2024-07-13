@@ -4,6 +4,7 @@ from typing import Optional
 from app.backend import SensorData
 from .base import Sensor
 
+import lywsd03mmc
 
 class Lywsd03mmcSensor(Sensor):
 
