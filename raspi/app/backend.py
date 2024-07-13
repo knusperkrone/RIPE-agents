@@ -1,7 +1,7 @@
 import json
 from dataclasses import dataclass
 from typing import Optional, Tuple, Final
-import requests as re # type: ignore
+import httpx
 
 
 class SensorData:
@@ -71,22 +71,27 @@ class BackendAdapter:
         super().__init__()
         print(f"Using base url {base_url}")
         self.base_url: Final[str] = base_url
+        self._client = httpx.AsyncClient()
 
-    def register_sensor(self) -> Tuple[int, str]:
-        r = re.post(f"{self.base_url}/sensor", json={})
+    async def register_sensor(self) -> Tuple[int, str]:
+        r = await self._client.post(f"{self.base_url}/sensor", json={})
         sensor_id = r.json()["id"]
         sensor_key = r.json()["key"]
         return (sensor_id, sensor_key)
 
-    def register_agent(self, sensor_id: int, sensor_key: str, domain: str, agent: str):
-        re.post(
+    async def register_agent(
+        self, sensor_id: int, sensor_key: str, domain: str, agent: str
+    ):
+        await self._client.post(
             f"{self.base_url}/agent/{sensor_id}",
             headers={"X-KEY": sensor_key},
             json={"domain": domain, "agent_name": agent},
         )
 
-    def fetch_sensor_brokers(self, sensor_id: int, sensor_key: str) -> list[Broker]:
-        r = re.get(
+    async def fetch_sensor_brokers(
+        self, sensor_id: int, sensor_key: str
+    ) -> list[Broker]:
+        r = await self._client.get(
             f"{self.base_url}/sensor/{sensor_id}",
             headers={"X-KEY": sensor_key},
             timeout=1000,

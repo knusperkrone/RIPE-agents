@@ -1,4 +1,5 @@
 import os
+import asyncio
 import subprocess
 import time as t
 
@@ -20,7 +21,7 @@ def get_git_hash():
         return "0000000"
 
 
-def kickoff():
+async def kickoff():
     version = get_git_hash()
     base_url = CONFIG.base_url
     adapter = BackendAdapter(base_url)
@@ -35,16 +36,17 @@ def kickoff():
     sensor_id, sensor_key = device.get_creds()
 
     mqtt_context = MqttContext(adapter, device, sensor_id, sensor_key, version)
-    mqtt_context.connect_or_die()
+    asyncio.create_task(mqtt_context.kickoff())
 
     while True:
         try:
-            payload = device.get_sensor_data()
+            async with asyncio.timeout(120):
+                payload = await device.get_sensor_data()
 
-            if not mqtt_context.is_connected():
-                mqtt_context.connect_or_die()
             mqtt_context.publish(payload)
             mqtt_context.log("published sensordata")
+        except asyncio.TimeoutError:
+            mqtt_context.log(f"Bluetooth timeout, retrying in 120 seconds")
         except Exception as e:
             # Rollback logic
             print(e)

@@ -34,11 +34,11 @@ class Device(BaseDevice):
         """Converts the received i64 into an actual command for the (alphabetically ordered) agent"""
         self.agents[index].set_state(cmd)
 
-    def get_sensor_data(self) -> SensorData:
+    async def get_sensor_data(self) -> SensorData:
         """Fetches and cumulates the sensor data"""
         data_list: list[SensorData] = []
         for sensor in self.sensors:
-            sensor_data = sensor.get_sensor_data()
+            sensor_data = await sensor.get_sensor_data()
             if sensor_data is not None:
                 data_list.append(sensor_data)
 

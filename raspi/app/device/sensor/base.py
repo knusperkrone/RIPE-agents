@@ -6,5 +6,5 @@ from app.backend import SensorData
 
 class Sensor(ABC):
     @abstractmethod
-    def get_sensor_data(self) -> Optional[SensorData]:
+    async def get_sensor_data(self) -> Optional[SensorData]:
         raise NotImplementedError("register_backend not implemented")

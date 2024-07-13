@@ -60,7 +60,7 @@ class MockRFDevice:
 
 
 try:
-    import RPi.GPIO as GPIO
+    import RPi.GPIO as GPIO # t
     from rpi_rf import RFDevice
 
     GPIO.setwarnings(False)

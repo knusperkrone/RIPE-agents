@@ -1,7 +1,7 @@
 import subprocess
 import time
 import atexit
-import requests as re
+import httpx
 import signal
 
 from typing import Optional
@@ -12,7 +12,7 @@ LAST_UPDATE: Optional[datetime] = None
 
 
 def run_app():
-    return subprocess.Popen(['python3', '-u', './ripe.py'])
+    return subprocess.Popen(["python3", "-u", "./ripe.py"])
 
 
 def cleanup():
@@ -24,32 +24,35 @@ def cleanup():
 
 def hot_reload_if_necessary():
     global APP
-    local_sha = subprocess.check_output(
-        ['git', 'rev-parse', 'HEAD']).decode('utf-8').strip()
-    remote_sha = re.get('https://api.github.com/repos/knusperkrone/RIPE-agents/commits/main', headers={
-        'accept': 'application/vnd.github.VERSION.sha'
-    }).text
+    local_sha = (
+        subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("utf-8").strip()
+    )
+    remote_sha = httpx.get(
+        "https://api.github.com/repos/knusperkrone/RIPE-agents/commits/main",
+        headers={"accept": "application/vnd.github.VERSION.sha"},
+    ).text
 
     if local_sha == remote_sha:
-        print(f'[Watchdog] Ripe is up to date: {local_sha}')
+        print(f"[Watchdog] Ripe is up to date: {local_sha}")
         return
 
     # update ripe
-    subprocess.run(['git', 'config', 'pull.rebase', 'false'])
-    subprocess.run(['git', 'config', 'user.email' 'RIPE-watchdog@example.com'])
-    subprocess.run(['git', 'config', 'user.name' 'Ripe Watchdog'])
-    status = subprocess.run(['git', 'pull', 'origin', 'main'])
+    subprocess.run(["git", "config", "pull.rebase", "false"])
+    subprocess.run(["git", "config", "user.email" "RIPE-watchdog@example.com"])
+    subprocess.run(["git", "config", "user.name" "Ripe Watchdog"])
+    status = subprocess.run(["git", "pull", "origin", "main"])
     if status.returncode != 0:
-        raise OSError('Failed pulling master')
-    status = subprocess.run(['pip3', 'install', '-r', 'requirements.txt'])
+        raise OSError("Failed pulling master")
+    status = subprocess.run(["pip3", "install", "-r", "requirements.txt"])
     if status.returncode != 0:
-        raise OSError('Failed installing dependencies')
+        raise OSError("Failed installing dependencies")
 
-    updated_sha = subprocess.check_output(
-        ['git', 'rev-parse', 'HEAD']).decode('utf-8').strip()
+    updated_sha = (
+        subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("utf-8").strip()
+    )
 
-    print(f'[Watchdog] Restarting ripe with: {updated_sha}')
-    
+    print(f"[Watchdog] Restarting ripe with: {updated_sha}")
+
     cleanup()
     APP = run_app()
 
@@ -61,7 +64,7 @@ APP = run_app()
 while True:
     time.sleep(1)
     if APP.poll() is not None:
-        print('[Watchdog] Ripe terminated restarting..')
+        print("[Watchdog] Ripe terminated restarting..")
         APP = run_app()
 
     if LAST_UPDATE is None or (datetime.now() - LAST_UPDATE) >= timedelta(hours=6):
@@ -69,4 +72,4 @@ while True:
             hot_reload_if_necessary()
             LAST_UPDATE = datetime.now()
         except Exception as e:
-            print(f'[Watchdog] Failed to hot reload application {e}')
+            print(f"[Watchdog] Failed to hot reload application {e}")

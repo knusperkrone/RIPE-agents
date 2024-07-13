@@ -12,7 +12,7 @@ class MiFloraSensor(Sensor):
         self.mac = mac
         self.poller = miflora_poller.MiFloraPoller(mac, BluepyBackend)
 
-    def get_sensor_data(self) -> Optional[SensorData]:
+    async def get_sensor_data(self) -> Optional[SensorData]:
         try:
             self.poller.clear_cache()
             self.poller.fill_cache()
