@@ -44,7 +44,9 @@ async def kickoff():
 
     while True:
         try:
-            if mqtt_context.is_connected():
+            if not mqtt_context.is_connected():
+                logger.warn("Mqtt not connected - skipping")
+            else:
                 payload = await asyncio.wait_for(device.get_sensor_data(), timeout=90.0)
 
                 await mqtt_context.publish(payload)
@@ -66,4 +68,4 @@ async def kickoff():
                 await mqtt_context.log(f"Failed publishing {e.__class__}")
 
         # timeout
-        await asyncio.sleep(120)
+        await asyncio.sleep(60)

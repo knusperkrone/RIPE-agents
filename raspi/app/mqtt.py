@@ -68,6 +68,7 @@ class MqttContext:
 
             try:
                 async with client:
+                    await self.log(f"Connected with broker {broker.host}")
                     self.client = client
                     await client.subscribe(f"{DISCONNECT_TOPIC}", qos=2)
                     await client.subscribe(
