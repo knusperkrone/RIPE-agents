@@ -182,7 +182,7 @@ class Lywsd03mmcSensor(Sensor):
     def __init__(self, mac: str):
         super().__init__()
         self._mac = mac
-        self._client = Lywsd03mmcClient(self._mac)
+        self._client = Lywsd03mmcClient(self._mac, timeout=20.0)
         self._last_data: Optional[Lywsd03mmcData] = None
 
     async def get_sensor_data(self) -> Optional[SensorData]:
