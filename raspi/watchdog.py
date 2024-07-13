@@ -1,7 +1,7 @@
 import subprocess
 import time
 import atexit
-import httpx
+import requests as re
 import signal
 
 from typing import Optional
@@ -27,7 +27,7 @@ def hot_reload_if_necessary():
     local_sha = (
         subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("utf-8").strip()
     )
-    remote_sha = httpx.get(
+    remote_sha = re.get(
         "https://api.github.com/repos/knusperkrone/RIPE-agents/commits/main",
         headers={"accept": "application/vnd.github.VERSION.sha"},
     ).text
