@@ -105,7 +105,7 @@ class MqttContext:
                     f"Failed to connect master server, {tries} retries left: {e}"
                 )
                 tries -= 1
-            t.sleep(1)
+            await asyncio.sleep(2.0)
 
         logger.critical("Failed to retrieve - exiting")
         os._exit(8)

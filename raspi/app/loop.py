@@ -60,10 +60,10 @@ async def kickoff():
                     f"Failed publishing due {e.__class__}, rollback succeeded: {rollback_succeeded}"
                 )
                 if rollback_succeeded:
-                    t.sleep(10)
+                    await asyncio.sleep(120)
                     continue
             else:
                 await mqtt_context.log(f"Failed publishing {e.__class__}")
 
         # timeout
-        t.sleep(120)
+        await asyncio.sleep(120)
