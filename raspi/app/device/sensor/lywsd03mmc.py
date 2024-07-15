@@ -1,6 +1,7 @@
 from typing import Optional
 from bleak import BleakClient
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 import struct
 
 
@@ -58,6 +59,7 @@ class Lywsd03mmcSensor(Sensor):
         super().__init__()
         self._mac = mac
         self._client = Lywsd03mmcClient(self._mac, timeout=20.0)
+        self._data_cache: Optional[tuple[datetime, Lywsd03mmcData]] = None
 
     async def get_sensor_data(self) -> Optional[SensorData]:
         try:
@@ -65,6 +67,7 @@ class Lywsd03mmcSensor(Sensor):
                 await self._client.connect()
 
             data: Lywsd03mmcData = await self._client.get_data()
+            self._data_cache = (datetime.now(), data)
             return SensorData(
                 battery=data.battery,
                 moisture=None,
@@ -75,4 +78,14 @@ class Lywsd03mmcSensor(Sensor):
             )
         except Exception as e:
             logger.error(f"Failed to get sensor data: {e}")
-            return None
+            if self._data_cache is not None and self._data_cache[
+                0
+            ] > datetime.now() - timedelta(minutes=5):
+                return SensorData(
+                    battery=self._data_cache[1].battery,
+                    moisture=None,
+                    light=None,
+                    temperature=self._data_cache[1].temperature,
+                    conductivity=None,
+                    humidity=self._data_cache[1].humidity,
+                )
