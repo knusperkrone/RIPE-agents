@@ -38,6 +38,10 @@ async def kickoff():
     mqtt_context = MqttContext(adapter, device, sensor_id, sensor_key, version)
     mqtt_context.kickoff()
 
+    if rollback_cmd is not None:
+        rollback_succeeded = os.system(rollback_cmd) == 0
+        logger.info(f"Initial rollback succeeded: {rollback_succeeded}")
+
     while not mqtt_context.is_connected():
         logger.info("Waiting for mqtt connection")
         await asyncio.sleep(1)
