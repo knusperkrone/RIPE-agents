@@ -58,13 +58,27 @@ class Lywsd03mmcSensor(Sensor):
     def __init__(self, mac: str):
         super().__init__()
         self._mac = mac
-        self._client = Lywsd03mmcClient(self._mac, timeout=20.0)
+        self._client = Lywsd03mmcClient(self._mac, timeout=30.0)
         self._data_cache: Optional[tuple[datetime, Lywsd03mmcData]] = None
+
+    async def _connect(self):
+        if self._client.is_connected():
+            return
+
+        tries = 5
+        while True:
+            try:
+                await self._client.connect()
+                return
+            except Exception as e:
+                logger.error(f"Failed to connect to sensor: {e}")
+                tries -= 1
+                if tries <= 0:
+                    raise e
 
     async def get_sensor_data(self) -> Optional[SensorData]:
         try:
-            if not self._client.is_connected():
-                await self._client.connect()
+            await self._connect()
 
             data: Lywsd03mmcData = await self._client.get_data()
             self._data_cache = (datetime.now(), data)
