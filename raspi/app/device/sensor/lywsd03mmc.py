@@ -37,7 +37,7 @@ class Lywsd03mmcClient:
     async def get_data(self) -> Lywsd03mmcData:
         res: bytearray = await self.__get_attribute(self.TEMPERATURE_UUID)
         (temp_int,) = struct.unpack_from("<h", res)
-        res: bytearray = await self.__get_attribute(self.HUMIDITY_UUID)
+        res = await self.__get_attribute(self.HUMIDITY_UUID)
         (hum_int,) = struct.unpack_from("<h", res)
         battery_int = await self.__get_attribute(self.BATTERY_UUID)
         battery = int.from_bytes(battery_int, byteorder="little")
@@ -105,6 +105,7 @@ class Lywsd03mmcSensor(Sensor):
                     conductivity=None,
                     humidity=self._data_cache[1].humidity,
                 )
+        return None
 
     def __str__(self) -> str:
-        return f"Lywsd03mmcSensor[{self.mac}]"
+        return f"Lywsd03mmcSensor[{self._mac}]"
