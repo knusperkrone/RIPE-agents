@@ -59,9 +59,9 @@ class PwmAgent(Agent):
         logger.warn(f"{self} failsafe state is: {self.failsaife_state}")
 
     def set_state(self, speed: int):
+        logger.debug(f"{self} ChangeDutyCycle {speed}")
         self.pwm_speed = speed
         self.pwm.ChangeDutyCycle(speed)
-        logger.debug(f"{self} ChangeDutyCycle {speed}")
 
     def __str__(self) -> str:
         return f"PwmAgent[{self.gpio_write}:{self.gpio_control}]"

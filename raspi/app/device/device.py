@@ -33,7 +33,12 @@ class Device(BaseDevice):
 
     def on_agent_cmd(self, index: int, cmd: int):
         """Converts the received i64 into an actual command for the (alphabetically ordered) agent"""
-        self.agents[index].set_state(cmd)
+        try:
+            self.agents[index].set_state(cmd)
+        except IndexError:
+            logger.error(f"Index {index} out of range")
+        except Exception as e:
+            logger.error(f"Error setting {self.agents[index]} state: {e}")
 
     async def get_sensor_data(self) -> SensorData:
         """Fetches and cumulates the sensor data"""
