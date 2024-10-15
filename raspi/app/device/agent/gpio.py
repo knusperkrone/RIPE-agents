@@ -60,8 +60,8 @@ class MockRFDevice:
 
 
 try:
-    import RPi.GPIO as GPIO # t
-    from rpi_rf import RFDevice
+    import RPi.GPIO as GPIO  # type: ignore
+    from rpi_rf import RFDevice  # type: ignore
 
     GPIO.setwarnings(False)
     GPIO.cleanup()

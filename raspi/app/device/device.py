@@ -1,6 +1,7 @@
+import asyncio
 from typing import cast, Union, Optional
 
-from app.util.math import argmin, average
+from app.util.math import average, argmin
 from app.util.log import logger
 from app.backend import BackendAdapter, SensorData
 
@@ -38,9 +39,14 @@ class Device(BaseDevice):
         """Fetches and cumulates the sensor data"""
         data_list: list[SensorData] = []
         for sensor in self.sensors:
-            sensor_data = await sensor.get_sensor_data()
-            if sensor_data is not None:
-                data_list.append(sensor_data)
+            try:
+                sensor_data = await asyncio.wait_for(
+                    sensor.get_sensor_data(), timeout=20.0
+                )
+                if sensor_data is not None:
+                    data_list.append(sensor_data)
+            except Exception as e:
+                logger.error(f"Error fetching {sensor} data: {e}")
 
         def normalize(data_list: list[SensorData], key: str) -> list[Union[int, float]]:
             values = map(lambda x: x.get(key), data_list)

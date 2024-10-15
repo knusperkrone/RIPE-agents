@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Final
 from bleak import BleakClient
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -23,8 +23,8 @@ class Lywsd03mmcClient:
     BATTERY_UUID = "00002a19-0000-1000-8000-00805f9b34fb"
 
     def __init__(self, mac_or_uuid: str, timeout: float):
-        self.mac_or_uuid = mac_or_uuid
-        self.client = BleakClient(
+        self.mac_or_uuid: Final[str] = mac_or_uuid
+        self.client: Final[BleakClient] = BleakClient(
             address_or_ble_device=self.mac_or_uuid, timeout=timeout
         )
 
@@ -57,8 +57,10 @@ class Lywsd03mmcSensor(Sensor):
 
     def __init__(self, mac: str):
         super().__init__()
-        self._mac = mac
-        self._client = Lywsd03mmcClient(self._mac, timeout=30.0)
+        self._mac: Final[str] = mac
+        self._client: Final[Lywsd03mmcClient] = Lywsd03mmcClient(
+            self._mac, timeout=30.0
+        )
         self._data_cache: Optional[tuple[datetime, Lywsd03mmcData]] = None
 
     async def _connect(self):
@@ -103,3 +105,6 @@ class Lywsd03mmcSensor(Sensor):
                     conductivity=None,
                     humidity=self._data_cache[1].humidity,
                 )
+
+    def __str__(self) -> str:
+        return f"Lywsd03mmcSensor[{self.mac}]"

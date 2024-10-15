@@ -49,14 +49,14 @@ async def kickoff():
     while True:
         try:
             if not mqtt_context.is_connected():
-                logger.warn("Mqtt not connected - skipping")
+                logger.warning("Mqtt not connected - skipping")
             else:
                 payload = await asyncio.wait_for(device.get_sensor_data(), timeout=90.0)
 
                 await mqtt_context.publish(payload)
                 await mqtt_context.log("published sensordata")
         except asyncio.TimeoutError:
-            mqtt_context.log(f"Bluetooth timeout, retrying in 120 seconds")
+            await mqtt_context.log(f"Bluetooth timeout, retrying in 120 seconds")
         except Exception as e:
             # Rollback logic
             print(e)
